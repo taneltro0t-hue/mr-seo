@@ -1,5 +1,7 @@
 # Mr.Seo — AI SEO workstation that actually does the work
 
+[![Release](https://img.shields.io/github/v/release/taneltro0t-hue/mr-seo?include_prereleases&label=release)](https://github.com/taneltro0t-hue/mr-seo/releases) [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-8b93ff.svg)](https://github.com/taneltro0t-hue/mr-seo/pulls) [![Telegram](https://img.shields.io/badge/TG-@lowlightconnect-26A5E4)](https://t.me/lowlightconnect)
+
 **v0.1.1-alpha** · Русский ниже ↓ · [Telegram @lowlightconnect](https://t.me/lowlightconnect)
 
 > An open-source SEO command center for **Yandex + Google**: a swarm of AI agents that
@@ -56,6 +58,12 @@ with human-readable reasons (MPK/low-quality filter!), SQI history, cannibalizat
   (optional: Bing Webmaster key, Telegram bot for morning digests)
 
 ## Quick start
+
+**Lazy mode (recommended):** open [INSTALL_AI.md](INSTALL_AI.md) in any AI-powered IDE
+(Cursor / Claude Code / Windsurf / Copilot) and say *"install this following INSTALL_AI.md"* —
+the agent sets everything up and only asks you for tokens.
+
+Manual mode:
 
 ```bash
 git clone https://github.com/taneltro0t-hue/mr-seo && cd mr-seo
@@ -154,6 +162,12 @@ Issues and PRs are very welcome. Free while we polish the machine together.
   (опционально: ключ Bing, Telegram-бот для утренних сводок)
 
 ## Быстрый старт
+
+**Ленивый режим (рекомендую):** откройте [INSTALL_AI.md](INSTALL_AI.md) в любой IDE с ИИ
+(Cursor / Claude Code / Windsurf / Copilot) и скажите «установи по INSTALL_AI.md» —
+агент всё поставит сам и спросит только токены.
+
+Ручной режим:
 
 ```bash
 git clone https://github.com/taneltro0t-hue/mr-seo && cd mr-seo
