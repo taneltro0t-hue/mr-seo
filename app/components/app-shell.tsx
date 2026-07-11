@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, FlaskConical, Gauge, LayoutDashboard, LineChart, Network, Radar, ScrollText, Sunrise } from "lucide-react";
+import { FileText, FlaskConical, Gauge, LayoutDashboard, LineChart, Network, Radar, Rocket, ScrollText, Sunrise } from "lucide-react";
 import { Rail } from "@/components/rail";
 import { SiteLogo } from "@/components/site-logo";
 import { LiveTicker } from "@/components/live-ticker";
@@ -19,6 +19,7 @@ const NAV = [
   { href: "/today", labelKey: "nav.today", Icon: Sunrise },
   { href: "/", labelKey: "nav.dashboard", Icon: LayoutDashboard },
   { href: "/timeline", labelKey: "nav.timeline", Icon: LineChart },
+  { href: "/deploys", labelKey: "nav.deploys", Icon: Rocket },
   { href: "/pult", labelKey: "nav.pult", Icon: Gauge },
   { href: "/nodes", labelKey: "nav.nodes", Icon: Radar },
   { href: "/hypotheses", labelKey: "nav.hypotheses", Icon: FlaskConical },

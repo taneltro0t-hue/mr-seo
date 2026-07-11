@@ -19,6 +19,7 @@ Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useApi } from "@/components/use-api";
+import { MergeDeployButton } from "@/components/deploy-merge-button";
 import { SeoOrb } from "@/components/seo-orb";
 import { WeekFocus } from "@/components/views/today-focus";
 import { DispatchButton } from "@/components/views/dashboard-insights";
@@ -243,15 +244,20 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
         </div>
       )}
 
-      {/* merge — команда с копированием */}
-      {action.kind === "merge" && action.hint && (
-        <div className="mt-4 pl-2">
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-black/40 px-3 py-2.5">
-            <code className="mono min-w-0 flex-1 truncate text-[11.5px] text-iris/90" title={action.hint}>
-              {action.hint}
-            </code>
-            <CopyButton value={action.hint} label={t("common.copy_label")} className="flex-none text-[11px]" />
-          </div>
+      {/* merge — боевая кнопка «Слить и задеплоить» + команда-fallback */}
+      {action.kind === "merge" && (
+        <div className="mt-4 space-y-2.5 pl-2">
+          {action.site && action.branch && (
+            <MergeDeployButton site={action.site} branch={action.branch} />
+          )}
+          {action.hint && (
+            <div className="flex items-center gap-2 rounded-xl border border-line bg-black/40 px-3 py-2.5">
+              <code className="mono min-w-0 flex-1 truncate text-[11.5px] text-iris/90" title={action.hint}>
+                {action.hint}
+              </code>
+              <CopyButton value={action.hint} label={t("common.copy_label")} className="flex-none text-[11px]" />
+            </div>
+          )}
         </div>
       )}
 

@@ -67,6 +67,7 @@ def actions() -> list:
             for b in [x.strip().lstrip("* ") for x in br.splitlines() if x.strip()]:
                 todo.append({"kind": "merge", "priority": 1,
                              "title": f"Merge ветки {b} ({site}) — правки готовы, билд проверен",
+                             "site": site, "branch": b,
                              "hint": f"cd в репо → git merge {b} → push = автодеплой"})
         except Exception:
             pass

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, FlaskConical, Gauge, LayoutDashboard, LineChart, Network, Radar, ScrollText, Sunrise, UserCircle2 } from "lucide-react";
+import { FileText, FlaskConical, Gauge, LayoutDashboard, LineChart, Network, Radar, Rocket, ScrollText, Sunrise, UserCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SeoOrb } from "@/components/seo-orb";
 import { SiteLogo } from "@/components/site-logo";
@@ -12,13 +12,14 @@ import { useSite } from "@/components/providers";
 import { useApi } from "@/components/use-api";
 import { useT } from "@/lib/i18n";
 import { SITES, SITE_ORDER } from "@/lib/sites";
-import type { AgentsResponse, TodayResponse } from "@/lib/types";
+import type { AgentsResponse, DeploysResponse, TodayResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const NAV: { href: string; labelKey: string; Icon: LucideIcon }[] = [
   { href: "/today", labelKey: "nav.today", Icon: Sunrise },
   { href: "/", labelKey: "nav.dashboard", Icon: LayoutDashboard },
   { href: "/timeline", labelKey: "nav.timeline", Icon: LineChart },
+  { href: "/deploys", labelKey: "nav.deploys", Icon: Rocket },
   { href: "/pult", labelKey: "nav.pult", Icon: Gauge },
   { href: "/nodes", labelKey: "nav.nodes", Icon: Radar },
   { href: "/hypotheses", labelKey: "nav.hypotheses", Icon: FlaskConical },
@@ -48,7 +49,9 @@ export function Rail() {
   const { t } = useT();
   const { data } = useApi<AgentsResponse>("/api/agents");
   const { data: today } = useApi<TodayResponse>("/api/today");
+  const { data: deploys } = useApi<DeploysResponse>("/api/deploys");
   const todayCount = today?.actions?.length ?? 0;
+  const deployCount = deploys?.pending?.length ?? 0;
   const working = (data?.agents ?? []).filter((a) => a.status === "live").length;
   const anyError = (data?.agents ?? []).some((a) => a.status === "error");
   const royColor = anyError ? "#ff6b6b" : working > 0 ? "#4bd39a" : "#9aa5b2";
@@ -68,7 +71,12 @@ export function Rail() {
       <nav className="mt-4 flex flex-col items-center gap-1">
         {NAV.map(({ href, labelKey, Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-          const badge = href === "/today" && todayCount > 0 ? todayCount : 0;
+          const badge =
+            href === "/today" && todayCount > 0
+              ? todayCount
+              : href === "/deploys" && deployCount > 0
+                ? deployCount
+                : 0;
           const label = t(labelKey);
           return (
             <Link

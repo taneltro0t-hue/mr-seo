@@ -223,3 +223,31 @@ export function appendNewSite(input: NewSitePayload): SwarmTask {
   const text = `[new-site] ${name} — ${url} · подключения: ${conns}`;
   return appendTask(text);
 }
+
+/** Статус воркера очереди: idle/running + оценка следующего прогона (цикл 2ч). */
+export function readWorkerStatus(): {
+  state: "idle" | "running" | "unknown";
+  current?: string;
+  lastRun?: string;
+  nextRunMin?: number;
+  queued: number;
+} {
+  const queued = readTasks().tasks.filter((t) => t.status === "queued").length;
+  let state: "idle" | "running" | "unknown" = "unknown";
+  let current: string | undefined;
+  let lastRun: string | undefined;
+  let nextRunMin: number | undefined;
+  try {
+    const st = JSON.parse(fs.readFileSync(path.join(SEO_ROOT, "swarm/tasks/worker_status.json"), "utf8"));
+    state = st.state === "running" ? "running" : "idle";
+    current = st.current || undefined;
+    lastRun = st.at;
+    if (state === "idle" && st.at) {
+      const elapsedMin = (Date.now() - new Date(st.at).getTime()) / 60000;
+      nextRunMin = Math.max(0, Math.round(120 - elapsedMin));
+    }
+  } catch {
+    /* воркер ещё ни разу не писал статус */
+  }
+  return { state, current, lastRun, nextRunMin, queued };
+}

@@ -87,6 +87,7 @@ export function LiveTicker() {
   const { data: overview } = useApi<Overview>(`/api/overview?site=${site}`);
   const { data: agentsData } = useApi<AgentsResponse>("/api/agents");
   const { data: runsData } = useApi<RunsResponse>("/api/runs");
+  const { data: tasksData } = useApi<{ worker?: { state: string; current?: string; nextRunMin?: number; queued: number } }>("/api/tasks");
 
   const agents = agentsData?.agents ?? [];
   const working = agents.filter((a) => a.status === "live").length;
@@ -106,6 +107,10 @@ export function LiveTicker() {
     if (bestRep) events.push(`РЕПУТАЦИЯ · ${bestRep.rating.toFixed(1)}★ ${bestRep.label}`);
   }
   const topRun = runsData?.runs?.[0];
+  const w = tasksData?.worker;
+  if (w?.state === "running") events.unshift(`⚙ SWARM · ${w.current ? w.current.slice(0, 60) : "working"}`);
+  else if (w && w.queued > 0) events.unshift(`⏳ SWARM · ${w.queued} in queue${w.nextRunMin != null ? ` · next run ~${w.nextRunMin}m` : ""}`);
+
   if (topRun?.signals?.[0]) events.push(`СВОДКА · ${topRun.signals[0].text}`);
   events.push("MR.SEO OS · v1.4");
   const line = events.join("      ·      ");

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appendTask, readTasks } from "@/lib/agents";
+import { appendTask, readTasks, readWorkerStatus } from "@/lib/agents";
 
 export const dynamic = "force-dynamic";
 
 export function GET() {
   try {
-    return NextResponse.json(readTasks());
+    return NextResponse.json({ ...readTasks(), worker: readWorkerStatus() });
   } catch (e) {
     return NextResponse.json({ error: "tasks_failed", message: String(e) }, { status: 500 });
   }
@@ -23,6 +23,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "empty" }, { status: 400 });
   }
   try {
+    // дедуп: такая же незакрытая задача уже в очереди → не плодим
+    const norm = (x: string) => x.replace(/\s+/g, " ").trim().toLowerCase();
+    const existing = readTasks().tasks.find((q) => q.status === "queued" && norm(q.text) === norm(text));
+    if (existing) {
+      return NextResponse.json({ ok: true, dedup: true, task: existing });
+    }
     const task = appendTask(text);
     return NextResponse.json({ ok: true, task });
   } catch (e) {

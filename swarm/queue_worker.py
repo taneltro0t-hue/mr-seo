@@ -37,9 +37,22 @@ def run_ops(*args) -> str:
     return r.stdout.strip()
 
 
+STATUS = ROOT / "swarm" / "tasks" / "worker_status.json"
+
+def _status(state: str, current: str = ""):
+    import json as _j
+    from datetime import datetime as _dt
+    try:
+        STATUS.write_text(_j.dumps({"state": state, "current": current[:120],
+                                    "at": _dt.now().isoformat(timespec="seconds")}, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
 def process() -> list[str]:
     if not INBOX.exists():
         return []
+    _status("running")
     lines = INBOX.read_text(encoding="utf-8").splitlines()
     done_reports = []
     out_lines = []
@@ -64,6 +77,7 @@ def process() -> list[str]:
             out_lines.append(ln)
             continue
         site, text = m.group("site"), m.group("text")
+        _status("running", text)
         um, qm = URL_RE.search(text), QUERY_RE.search(text)
         path = um.group(1).rstrip(":,") if um else "/"
         query = qm.group(1) if qm else text[:50]
@@ -93,6 +107,7 @@ def process() -> list[str]:
         out_lines.append(ln + f"  → ✓ {stamp}: {'; '.join(steps)}")
         done_reports.append(f"«{query}» [{site}]: {'; '.join(steps)}")
     INBOX.write_text("\n".join(out_lines) + "\n", encoding="utf-8")
+    _status("idle")
     return done_reports
 
 

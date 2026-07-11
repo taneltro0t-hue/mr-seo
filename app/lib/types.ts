@@ -458,12 +458,49 @@ export interface TodayAction {
   fix?: TodayFix; // кнопка «исправить» — рой чинит по клику
   hint?: string; // команда для merge
   url?: string; // ссылка для review
+  site?: string; // для kind=merge: ключ сайта (для кнопки «Слить и задеплоить»)
+  branch?: string; // для kind=merge: ветка mrseo/*
 }
 
 export interface TodayResponse {
   date: string;
   night: TodayNight[];
   actions: TodayAction[];
+}
+
+// ---- Раунд 14: Деплои (swarm/deploys.py) ----
+export type DeployStage = "awaiting_merge" | "verifying" | "confirmed" | "partial" | "falsified";
+
+export interface DeployPending {
+  site: string;
+  branch: string;
+  date: string;
+  sha: string;
+  task: string;
+  stage: "awaiting_merge";
+}
+
+export interface DeployMerged {
+  site: string;
+  id: string;
+  sha: string | null;
+  date: string | null;
+  task: string;
+  stage: "verifying" | "confirmed" | "partial" | "falsified";
+  verify_due?: string | null;
+  verdict?: string | null;
+  targets: string[];
+}
+
+export interface DeploysResponse {
+  pending: DeployPending[];
+  merged: DeployMerged[];
+}
+
+export interface DeployMergeResult {
+  ok: boolean;
+  note?: string;
+  error?: string;
 }
 
 // ---- Раунд 11: «Фокус недели» (swarm/focus.py) ----

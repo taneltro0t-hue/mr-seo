@@ -157,6 +157,23 @@ export function DispatchButton({
   const idle = idleLabel ?? t("common.dispatch");
   const done = doneLabel ?? t("insights.dispatch_done");
 
+  // правда сервера: если такая задача уже в очереди — кнопка сразу «в очереди»,
+  // переживает переходы между страницами (фикс: раньше состояние жило в памяти)
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/tasks")
+      .then((r) => r.json())
+      .then((d: { tasks?: { text: string; status: string }[] }) => {
+        if (!alive || !d?.tasks) return;
+        const norm = (x: string) => x.replace(/\s+/g, " ").trim().toLowerCase();
+        if (d.tasks.some((q) => q.status === "queued" && norm(q.text) === norm(text))) {
+          setState("done");
+        }
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [text]);
+
   const dispatch = async () => {
     if (state === "sending" || state === "done") return;
     setState("sending");
