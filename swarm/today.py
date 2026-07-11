@@ -46,8 +46,7 @@ def night() -> list:
                 m = re.search(r"[«\"]([^»\"]+)[»\"]", ln)
                 done.append({"time": "", "what": f"Рой исполнил: «{(m.group(1) if m else ln[:40])}» (переобход+план)", "ref": "swarm/tasks/inbox.md"})
     # свежий скан
-    from sites_config import SITES as _SS
-    for site in _SS:
+    for site in ("mysite", "demo2", "demo3"):
         fs = sorted(glob.glob(str(ROOT / "memory" / site / "daily_snapshots" / f"{TODAY}.json")))
         if fs:
             done.append({"time": _mtime(fs[0]).strftime("%H:%M"), "what": f"Скан позиций {site}", "ref": ""})

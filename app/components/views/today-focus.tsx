@@ -6,6 +6,7 @@ import { useApi } from "@/components/use-api";
 import { DispatchButton } from "@/components/views/dashboard-insights";
 import { SiteLogo } from "@/components/site-logo";
 import { SectionLabel } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import { SITES, isSiteKey } from "@/lib/sites";
 import type { FocusItem, FocusResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
  * У дел исполнителя «рой» — кнопка «Поручить» (готовый action → /api/tasks).
  */
 export function WeekFocus() {
+  const { t } = useT();
   const { data, loading } = useApi<FocusResponse>("/api/focus");
 
   if (loading) return <FocusSkeleton />;
@@ -28,11 +30,11 @@ export function WeekFocus() {
       <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
         <div className="flex items-center gap-2.5">
           <Target size={17} className="text-iris" />
-          <SectionLabel>Фокус недели</SectionLabel>
+          <SectionLabel>{t("focus.title")}</SectionLabel>
           {data.week && <span className="mono text-[11px] text-ghost">{data.week}</span>}
         </div>
         <p className="max-w-[360px] text-[12.5px] leading-relaxed text-faint">
-          Три дела с максимальной отдачей на эту неделю — мозг выбрал их из всех данных.
+          {t("focus.subtitle")}
         </p>
       </div>
 
@@ -46,8 +48,9 @@ export function WeekFocus() {
 }
 
 function FocusCard({ item, index }: { item: FocusItem; index: number }) {
+  const { t } = useT();
   const meta = isSiteKey(item.site) ? SITES[item.site] : null;
-  const isRoy = item.executor === "рой";
+  const isRoy = String(item.executor) === "рой" || String(item.executor) === "swarm";
 
   return (
     <motion.div
@@ -83,7 +86,7 @@ function FocusCard({ item, index }: { item: FocusItem; index: number }) {
         <ExecutorChip executor={item.executor} />
         {isRoy && (
           <div className="ml-auto">
-            <DispatchButton text={item.action} idleLabel="Поручить" doneLabel="в очереди" />
+            <DispatchButton text={item.action} idleLabel={t("common.dispatch_short")} doneLabel={t("common.queued")} />
           </div>
         )}
       </div>
@@ -92,7 +95,8 @@ function FocusCard({ item, index }: { item: FocusItem; index: number }) {
 }
 
 function ExecutorChip({ executor }: { executor: FocusItem["executor"] }) {
-  const roy = executor === "рой";
+  const { t } = useT();
+  const roy = String(executor) === "рой" || String(executor) === "swarm";
   return (
     <span
       className={cn(
@@ -107,17 +111,18 @@ function ExecutorChip({ executor }: { executor: FocusItem["executor"] }) {
       ) : (
         <UserRound size={11} />
       )}
-      {roy ? "рой сделает сам" : "делает человек"}
+      {roy ? t("focus.exec_roy") : t("focus.exec_human")}
     </span>
   );
 }
 
 function FocusSkeleton() {
+  const { t } = useT();
   return (
     <section>
       <div className="flex items-center gap-2.5">
         <Target size={17} className="text-iris/60" />
-        <SectionLabel>Фокус недели</SectionLabel>
+        <SectionLabel>{t("focus.title")}</SectionLabel>
       </div>
       <div className="mt-6 grid gap-px overflow-hidden rounded-[var(--radius-xl2)] border border-line bg-line lg:grid-cols-3">
         {[0, 1, 2].map((i) => (
@@ -129,9 +134,9 @@ function FocusSkeleton() {
               style={{ boxShadow: "0 0 12px rgba(139,147,255,0.7)" }}
             />
             <div className="mono text-[11px] leading-relaxed text-faint">
-              Мозг думает над фокусом…
+              {t("focus.thinking")}
               <br />
-              <span className="text-ghost">это может занять пару минут</span>
+              <span className="text-ghost">{t("focus.thinking_sub")}</span>
             </div>
           </div>
         ))}

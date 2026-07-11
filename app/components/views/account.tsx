@@ -9,6 +9,7 @@ import { refreshCloud, useCloudStatus } from "@/components/cloud-status";
 import { deviceId, sendMagicLink, signOut } from "@/lib/cloud";
 import type { LicenseState } from "@/lib/cloud";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,13 +34,14 @@ function daysLeft(iso?: string): number | null {
 
 export function AccountView() {
   const { state, loading } = useCloudStatus();
+  const { t } = useT();
 
   return (
     <div className="space-y-10">
       <PageHead
-        eyebrow="P2 · Облако Mr.Seo"
-        title={<>Аккаунт</>}
-        lede="Вход по ссылке из письма и лицензия устройства. Пока это мягкий контур — функции приложения работают без входа."
+        eyebrow={t("account.eyebrow")}
+        title={<>{t("nav.account")}</>}
+        lede={t("account.lede")}
       />
 
       {loading || !state ? (
@@ -81,6 +83,7 @@ function LoadingCard() {
 /* ----------------------------------- dev ---------------------------------- */
 
 function DevCard() {
+  const { t } = useT();
   return (
     <FadeIn>
       <Panel className="hud-frame relative overflow-hidden p-8">
@@ -89,14 +92,12 @@ function DevCard() {
             <TerminalSquare size={20} strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
-            <div className="cap text-faint">Режим разработчика</div>
+            <div className="cap text-faint">{t("account.dev_eyebrow")}</div>
             <h2 className="mt-2 font-display text-[22px] font-500 leading-tight text-ink">
-              Облако не настроено
+              {t("account.dev_title")}
             </h2>
             <p className="mt-2.5 max-w-xl text-[13.5px] leading-relaxed text-muted">
-              Переменные Supabase не заданы, поэтому Mr.Seo работает локально без входа и лицензии.
-              Всё разблокировано — удобно для разработки. Как только облако подключат, здесь появится
-              форма входа.
+              {t("account.dev_body")}
             </p>
           </div>
         </div>
@@ -108,6 +109,7 @@ function DevCard() {
 /* -------------------------------- sign-in --------------------------------- */
 
 function SignInHero() {
+  const { t } = useT();
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +137,7 @@ function SignInHero() {
       setSentTo(addr);
       setCooldown(60);
     } else {
-      setError(r.error ?? "Не удалось отправить письмо");
+      setError(r.error ?? t("account.send_failed"));
     }
   }
 
@@ -154,16 +156,15 @@ function SignInHero() {
             ) : (
               <>
                 <h2 className="mt-7 font-display text-[26px] font-500 leading-tight tracking-[-0.02em] text-ink">
-                  Войдите в Mr.Seo
+                  {t("account.signin_title")}
                 </h2>
                 <p className="mt-3 max-w-[380px] text-[13.5px] leading-relaxed text-muted">
-                  Введите e-mail — пришлём ссылку для входа. Ни паролей, ни лишних полей.
-                  При первом входе включаем пробный доступ на 14 дней.
+                  {t("account.signin_body")}
                 </p>
 
                 <form onSubmit={submit} className="mt-7 w-full max-w-[380px] space-y-3 text-left">
                   <label className="block">
-                    <span className="cap mb-2 block text-ghost">E-mail</span>
+                    <span className="cap mb-2 block text-ghost">{t("account.email_label")}</span>
                     <input
                       type="email"
                       inputMode="email"
@@ -200,7 +201,7 @@ function SignInHero() {
                         : "cursor-not-allowed border border-line bg-white/[0.02] text-ghost"
                     )}
                   >
-                    {sending ? "Отправляем…" : "Получить ссылку"}
+                    {sending ? t("account.sending") : t("account.get_link")}
                     {!sending && (
                       <ArrowRight
                         size={16}
@@ -216,7 +217,7 @@ function SignInHero() {
         </Panel>
 
         <p className="mt-5 text-center text-[11.5px] leading-relaxed text-ghost">
-          Продолжая, вы соглашаетесь с условиями использования Mr.Seo.
+          {t("account.terms")}
         </p>
       </div>
     </FadeIn>
@@ -234,6 +235,7 @@ function SentState({
   onResend: () => void;
   sending: boolean;
 }) {
+  const { t } = useT();
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -243,16 +245,15 @@ function SentState({
     >
       <span className="mt-7 inline-flex items-center gap-2 rounded-full border border-good/25 bg-good/10 px-3 py-1 text-good">
         <MailCheck size={14} />
-        <span className="cap text-good">Письмо отправлено</span>
+        <span className="cap text-good">{t("account.email_sent")}</span>
       </span>
 
       <h2 className="mt-5 font-display text-[24px] font-500 leading-tight tracking-[-0.02em] text-ink">
-        Проверьте почту
+        {t("account.check_mail")}
       </h2>
       <p className="mt-3 max-w-[400px] text-[13.5px] leading-relaxed text-muted">
-        Ссылка для входа ушла на{" "}
-        <span className="font-600 text-ink">{sentTo}</span>. Откройте её в этом браузере — вы
-        вернётесь сюда уже войдя.
+        {t("account.sent_prefix")}{" "}
+        <span className="font-600 text-ink">{sentTo}</span>{t("account.sent_suffix")}
       </p>
 
       <div className="mt-7 flex items-center gap-3">
@@ -268,10 +269,10 @@ function SentState({
           )}
         >
           {sending
-            ? "Отправляем…"
+            ? t("account.sending")
             : cooldown > 0
               ? `Повторить через ${cooldown} с`
-              : "Отправить ещё раз"}
+              : t("account.resend")}
         </button>
       </div>
     </motion.div>
@@ -281,6 +282,7 @@ function SentState({
 /* ------------------------------- licensed --------------------------------- */
 
 function LicensedCard({ state }: { state: LicenseState }) {
+  const { t } = useT();
   const [device, setDevice] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
@@ -326,7 +328,7 @@ function LicensedCard({ state }: { state: LicenseState }) {
 
         {/* поля */}
         <div className="grid gap-px bg-line sm:grid-cols-2">
-          <Field label="Лицензия действует до">
+          <Field label={t("account.valid_until")}>
             <div className="flex items-baseline gap-2">
               <span className="text-[15px] font-600 text-ink">{ruDate(state.expiresAt)}</span>
               {left != null && (
@@ -335,7 +337,7 @@ function LicensedCard({ state }: { state: LicenseState }) {
             </div>
           </Field>
 
-          <Field label="Это устройство" icon={<MonitorSmartphone size={13} />}>
+          <Field label={t("account.this_device")} icon={<MonitorSmartphone size={13} />}>
             <div className="flex items-center gap-2.5">
               <span className="mono truncate text-[13px] text-muted">{shortDevice}</span>
               {device && <CopyButton value={device} label="ID" className="px-2 py-1" />}
@@ -356,7 +358,7 @@ function LicensedCard({ state }: { state: LicenseState }) {
             className="focus-ring flex flex-none items-center gap-2 rounded-xl border border-line px-4 py-2.5 text-[13px] font-500 text-muted transition-colors hover:border-warn/40 hover:bg-warn/5 hover:text-warn disabled:cursor-not-allowed disabled:opacity-60"
           >
             <LogOut size={15} />
-            {busy ? "Выходим…" : "Выйти"}
+            {busy ? t("account.signing_out") : t("account.sign_out")}
           </button>
         </div>
       </Panel>
@@ -367,6 +369,7 @@ function LicensedCard({ state }: { state: LicenseState }) {
 /* -------------------------------- expired --------------------------------- */
 
 function ExpiredCard({ state }: { state: LicenseState }) {
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
 
   async function doSignOut() {
@@ -390,7 +393,7 @@ function ExpiredCard({ state }: { state: LicenseState }) {
             </h2>
             <p className="mt-2.5 max-w-xl text-[13.5px] leading-relaxed text-muted">
               Срок доступа для{" "}
-              <span className="font-600 text-ink">{state.email || "вашего аккаунта"}</span> закончился
+              <span className="font-600 text-ink">{state.email || t("account.your_account")}</span> закончился
               {state.expiresAt ? ` ${ruDate(state.expiresAt)}` : ""}. Чтобы продлить — напишите нам, и
               мы вернём доступ.
             </p>
@@ -407,7 +410,7 @@ function ExpiredCard({ state }: { state: LicenseState }) {
                 className="focus-ring flex items-center gap-2 rounded-xl border border-line px-4 py-2.5 text-[13px] font-500 text-muted transition-colors hover:bg-white/[0.05] hover:text-ink disabled:opacity-60"
               >
                 <LogOut size={15} />
-                {busy ? "Выходим…" : "Выйти"}
+                {busy ? t("account.signing_out") : t("account.sign_out")}
               </button>
             </div>
           </div>

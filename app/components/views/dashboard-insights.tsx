@@ -8,6 +8,7 @@ import { useApi } from "@/components/use-api";
 import { KineticNumber } from "@/components/kinetic-number";
 import { Explain } from "@/components/explain";
 import { CopyButton, SectionLabel, Skeleton } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import type {
   InsightSrc,
   QueryPageResponse,
@@ -30,6 +31,7 @@ const fmtPos = (p: number) => (p > 0 ? p.toFixed(1).replace(/\.0$/, "") : "—")
 /* Editorial-список: увидел → нажал «Поручить рою» → рой чинит. Сердце продукта. */
 
 export function QuickWinsPanel({ site }: { site: SiteKey }) {
+  const { t, tn } = useT();
   const { data, loading } = useApi<QuickWinsResponse>(`/api/insights?kind=quick_wins&site=${site}`);
 
   if (loading || !data) return <QuickWinsSkeleton />;
@@ -38,8 +40,8 @@ export function QuickWinsPanel({ site }: { site: SiteKey }) {
   if (wins.length === 0) {
     return (
       <InsightEmpty
-        title="Быстрых побед пока нет"
-        body="Здесь появятся запросы у самой границы топа — те, что можно дожать одним точечным движением. Ближайший скан соберёт их автоматически."
+        title={t("insights.qw_empty_title")}
+        body={t("insights.qw_empty_body")}
       />
     );
   }
@@ -47,9 +49,9 @@ export function QuickWinsPanel({ site }: { site: SiteKey }) {
   return (
     <div>
       <div className="mb-1 flex items-baseline gap-3">
-        <SectionLabel>На грани топа</SectionLabel>
+        <SectionLabel>{t("insights.on_edge")}</SectionLabel>
         <span className="mono text-[11px] text-faint">
-          {data.count} {plural(data.count, "запрос", "запроса", "запросов")} · показаны {wins.length}
+          {data.count} {tn("query", data.count)} · {t("insights.shown", { n: wins.length })}
         </span>
       </div>
       <div className="flex flex-col">
@@ -62,11 +64,15 @@ export function QuickWinsPanel({ site }: { site: SiteKey }) {
 }
 
 function QuickWinRow({ win, index, site }: { win: QuickWin; index: number; site: SiteKey }) {
+  const { t, tn } = useT();
   const src = SRC[win.src];
-  const demandStr =
-    win.demand != null ? `спрос ${win.demand}` : `${win.impressions} ${plural(win.impressions, "показ", "показа", "показов")}`;
+  // отображаемая метка (в языке интерфейса)
+  const demandLabel =
+    win.demand != null ? t("insights.demand", { n: win.demand }) : `${win.impressions} ${tn("impression", win.impressions)}`;
+  // русская метка для задачи рою (payload остаётся на русском — это команда бэкенду)
+  const demandRu = win.demand != null ? `спрос ${win.demand}` : `${win.impressions} показов`;
   const pageClause = win.url ? ` — страница ${win.url}` : "";
-  const taskText = `[quick-win ${site}] Дожать запрос "${win.query}" (поз ${fmtPos(win.position)}, ${demandStr})${pageClause}: усилить контент/перелинковку, отправить на переобход`;
+  const taskText = `[quick-win ${site}] Дожать запрос "${win.query}" (поз ${fmtPos(win.position)}, ${demandRu})${pageClause}: усилить контент/перелинковку, отправить на переобход`;
 
   return (
     <motion.div
@@ -98,18 +104,18 @@ function QuickWinRow({ win, index, site }: { win: QuickWin; index: number; site:
         </div>
         <div className="mono mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[10.5px] text-faint">
           <span>
-            поз{" "}
+            {t("insights.pos_abbr")}{" "}
             <Explain
               site={site}
-              metric={`Позиция «${win.query}»`}
+              metric={t("insights.position_of", { query: win.query })}
               value={fmtPos(win.position)}
-              context={`источник ${src.full}, ${demandStr}; запрос у границы топа`}
+              context={t("insights.qw_ctx", { src: src.full, demand: demandLabel })}
             >
               <span className="tabular text-muted">{fmtPos(win.position)}</span>
             </Explain>
           </span>
           <span className="text-ghost">·</span>
-          <span>{demandStr}</span>
+          <span>{demandLabel}</span>
           {win.url && (
             <>
               <span className="text-ghost">·</span>
@@ -137,8 +143,8 @@ type DispatchState = "idle" | "sending" | "done" | "error";
  */
 export function DispatchButton({
   text,
-  idleLabel = "Поручить рою",
-  doneLabel = "в очереди роя",
+  idleLabel,
+  doneLabel,
   Icon = Zap,
 }: {
   text: string;
@@ -146,7 +152,10 @@ export function DispatchButton({
   doneLabel?: string;
   Icon?: LucideIcon;
 }) {
+  const { t } = useT();
   const [state, setState] = useState<DispatchState>("idle");
+  const idle = idleLabel ?? t("common.dispatch");
+  const done = doneLabel ?? t("insights.dispatch_done");
 
   const dispatch = async () => {
     if (state === "sending" || state === "done") return;
@@ -171,7 +180,7 @@ export function DispatchButton({
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         className="mono inline-flex items-center gap-1.5 rounded-lg border border-good/30 bg-good/10 px-3 py-2 text-[12px] font-600 text-good"
       >
-        <Check size={13} strokeWidth={3} /> {doneLabel}
+        <Check size={13} strokeWidth={3} /> {done}
       </motion.span>
     );
   }
@@ -193,7 +202,7 @@ export function DispatchButton({
       ) : (
         <Icon size={13} className={state === "error" ? "" : "text-iris"} />
       )}
-      {state === "sending" ? "Отправляю…" : state === "error" ? "Ещё раз" : idleLabel}
+      {state === "sending" ? t("common.sending") : state === "error" ? t("common.retry") : idle}
     </button>
   );
 }
@@ -211,6 +220,7 @@ export function ForgeButton({
   query: string;
   url?: string | null;
 }) {
+  const { t } = useT();
   const [state, setState] = useState<ForgeState>("idle");
   const [draft, setDraft] = useState<{ path: string; chars: number } | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -264,9 +274,9 @@ export function ForgeButton({
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           style={{ boxShadow: "0 0 10px rgba(56,232,208,0.8)" }}
         />
-        Мозг пишет…
+        {t("insights.forge_writing")}
         <span className="tabular text-cyan/70">{mm}:{ss}</span>
-        <span className="hidden text-cyan/50 sm:inline">· ~2–4 мин</span>
+        <span className="hidden text-cyan/50 sm:inline">{t("insights.forge_eta")}</span>
       </motion.span>
     );
   }
@@ -280,10 +290,10 @@ export function ForgeButton({
         className="inline-flex flex-wrap items-center gap-2"
       >
         <span className="mono inline-flex items-center gap-1.5 rounded-lg border border-good/30 bg-good/10 px-3 py-2 text-[12px] font-600 text-good">
-          <Check size={13} strokeWidth={3} /> Черновик готов
-          {draft.chars > 0 && <span className="text-good/60">· {Math.round(draft.chars / 1000)}к зн.</span>}
+          <Check size={13} strokeWidth={3} /> {t("insights.forge_done")}
+          {draft.chars > 0 && <span className="text-good/60">{t("insights.forge_chars", { n: Math.round(draft.chars / 1000) })}</span>}
         </span>
-        <CopyButton value={draft.path} label="Путь" className="text-[11px]" />
+        <CopyButton value={draft.path} label={t("common.copy_path")} className="text-[11px]" />
       </motion.span>
     );
   }
@@ -300,7 +310,7 @@ export function ForgeButton({
       )}
     >
       <FilePen size={13} className={state === "error" ? "" : "text-cyan"} />
-      {state === "error" ? "Ещё раз" : "Статья"}
+      {state === "error" ? t("common.retry") : t("insights.forge_cta")}
     </button>
   );
 }
@@ -327,11 +337,12 @@ function QuickWinsSkeleton() {
 /* По точкам текущего сайта: рейтинг, отзывы, +N за 7д, Читать / Ответить. */
 
 export function ReviewsPanel({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const { data, loading } = useApi<ReviewsResponse>(`/api/insights?kind=reviews`);
 
   return (
     <div>
-      <SectionLabel className="mb-4">Репутация · Я.Карты</SectionLabel>
+      <SectionLabel className="mb-4">{t("insights.reputation")}</SectionLabel>
       {loading || !data ? (
         <div className="grid gap-px overflow-hidden rounded-[var(--radius-xl2)] border border-line bg-line">
           <Skeleton className="h-40" />
@@ -344,13 +355,14 @@ export function ReviewsPanel({ site }: { site: SiteKey }) {
 }
 
 function ReviewsBody({ data, site }: { data: ReviewsResponse; site: SiteKey }) {
+  const { t } = useT();
   const points = data.points.filter((p) => p.key === site || p.key.startsWith(`${site}_`));
 
   if (points.length === 0) {
     return (
       <InsightEmpty
-        title="У этого проекта нет точек на Я.Картах"
-        body="Мониторить отзывы можно только по карточкам организации на Яндекс.Картах. Как только точка появится и подключится — рейтинг и свежие отзывы придут сюда."
+        title={t("insights.reviews_empty_title")}
+        body={t("insights.reviews_empty_body")}
       />
     );
   }
@@ -368,6 +380,7 @@ function ReviewsBody({ data, site }: { data: ReviewsResponse; site: SiteKey }) {
 }
 
 function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][number]; index: number; site: SiteKey }) {
+  const { t, tn } = useT();
   const fresh = point.new_7d > 0;
   return (
     <motion.div
@@ -382,10 +395,10 @@ function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][n
         {fresh ? (
           <span className="mono inline-flex items-center gap-1.5 rounded-full border border-good/30 bg-good/10 px-2.5 py-1 text-[10px] font-600 text-good">
             <span className="warm-pulse h-1.5 w-1.5 rounded-full bg-good" />
-            есть новые!
+            {t("insights.has_new")}
           </span>
         ) : (
-          <span className="mono rounded-full border border-line px-2.5 py-1 text-[10px] text-faint">без новых</span>
+          <span className="mono rounded-full border border-line px-2.5 py-1 text-[10px] text-faint">{t("insights.no_new")}</span>
         )}
       </div>
 
@@ -393,22 +406,22 @@ function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][n
         <span className="tabular font-display text-4xl font-600 leading-none text-ink">
           <Explain
             site={site}
-            metric={`Рейтинг · ${point.label}`}
+            metric={t("insights.rating_of", { label: point.label })}
             value={point.rating.toFixed(1)}
-            context={`${point.reviews} отзывов на Яндекс.Картах; шкала 1–5★`}
+            context={t("insights.rating_ctx", { n: point.reviews })}
           >
             <KineticNumber value={point.rating} decimals={1} />
           </Explain>
         </span>
         <Star size={16} className="mb-1 fill-ok text-ok" />
         <span className="mono mb-1 ml-1 text-[11px] text-faint">
-          {point.reviews} {plural(point.reviews, "отзыв", "отзыва", "отзывов")}
+          {point.reviews} {tn("review", point.reviews)}
         </span>
       </div>
 
       {fresh && (
         <div className="mono mt-2 text-[11px] font-600 text-good">
-          +{point.new_7d} {plural(point.new_7d, "новый", "новых", "новых")} за 7 дней — ответьте им
+          {t("insights.new_in_7d", { n: point.new_7d, word: tn("new", point.new_7d) })}
         </div>
       )}
 
@@ -419,7 +432,7 @@ function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][n
           rel="noopener noreferrer"
           className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-line bg-white/[0.03] px-3 py-2 text-[12px] font-600 text-muted transition-colors hover:bg-white/[0.07] hover:text-ink"
         >
-          Читать
+          {t("common.read")}
         </a>
         <a
           href={point.reply_url}
@@ -432,7 +445,7 @@ function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][n
               : "border border-line bg-white/[0.03] text-muted hover:border-iris/45 hover:text-iris"
           )}
         >
-          Ответить
+          {t("common.reply")}
         </a>
       </div>
     </motion.div>
@@ -443,16 +456,17 @@ function ReviewCard({ point, index, site }: { point: ReviewsResponse["points"][n
 /* Раскрывашка: топ-8 страниц, у каждой — её запросы. «Кто за что отвечает». */
 
 export function QueryPageCard({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const { data, loading } = useApi<QueryPageResponse>(`/api/insights?kind=query_page&site=${site}`);
 
   return (
     <div className="surface-line p-7">
       <div className="mb-1.5 flex items-center gap-2.5">
         <ChevronRight size={17} className="text-cyan" />
-        <SectionLabel>Запрос ↔ страница</SectionLabel>
+        <SectionLabel>{t("insights.qp_title")}</SectionLabel>
       </div>
       <p className="mb-4 text-[11px] leading-relaxed text-faint">
-        Какая страница за какие запросы отвечает. Разверните страницу — увидите её запросы и позиции.
+        {t("insights.qp_desc")}
       </p>
 
       {loading || !data ? (
@@ -463,8 +477,8 @@ export function QueryPageCard({ site }: { site: SiteKey }) {
         </div>
       ) : data.pages.length === 0 ? (
         <InsightEmpty
-          title="Связка запрос ↔ страница ещё не собрана"
-          body="Как только Вебмастер отдаст статистику по URL, здесь появится карта: какая страница за что отвечает."
+          title={t("insights.qp_empty_title")}
+          body={t("insights.qp_empty_body")}
         />
       ) : (
         <div className="flex flex-col">
@@ -486,6 +500,7 @@ function PageRow({
   defaultOpen: boolean;
   first: boolean;
 }) {
+  const { t, tn } = useT();
   const [open, setOpen] = useState(defaultOpen);
   const queries = [...page.queries].sort((a, b) => {
     const pa = a.position > 0 ? a.position : 999;
@@ -508,7 +523,7 @@ function PageRow({
           {page.page}
         </span>
         <span className="cap flex-none">
-          {page.total_queries} {plural(page.total_queries, "запрос", "запроса", "запросов")}
+          {page.total_queries} {tn("query", page.total_queries)}
         </span>
       </button>
 
@@ -546,7 +561,7 @@ function PageRow({
                         inIndex ? "border-line text-ink" : "border-line bg-white/[0.02] text-faint"
                       )}
                     >
-                      {inIndex ? fmtPos(q.position) : "вне топа"}
+                      {inIndex ? fmtPos(q.position) : t("insights.out_of_top")}
                     </span>
                   </div>
                 );
@@ -571,13 +586,4 @@ function InsightEmpty({ title, body }: { title: string; body: string }) {
       </div>
     </div>
   );
-}
-
-/** Русская плюрализация: (1 → one, 2..4 → few, 0/5.. → many). */
-export function plural(n: number, one: string, few: string, many: string) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
-  return many;
 }

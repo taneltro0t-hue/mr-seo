@@ -13,13 +13,13 @@ const SEO_AGENT_ROOT =
 const PY = path.join(SEO_AGENT_ROOT, "venv", "bin", "python");
 const SCRIPT = path.join(SEO_AGENT_ROOT, "swarm", "yandex_webmaster.py");
 const run = promisify(execFile);
-const SITE_KEY_RE = /^[a-z0-9_-]{2,24}$/; // ключи из sites_config.py
+const SITES = new Set(["mysite", "demo2", "demo3"]);
 const KINDS = new Set(["excluded", "sqi", "links"]);
 
 export async function GET(req: NextRequest) {
   const kind = req.nextUrl.searchParams.get("kind") ?? "";
   const site = req.nextUrl.searchParams.get("site") ?? "";
-  if (!KINDS.has(kind) || !SITE_KEY_RE.test(site)) {
+  if (!KINDS.has(kind) || !SITES.has(site)) {
     return Response.json({ error: "kind=excluded|sqi|links & site=..." }, { status: 400 });
   }
   try {

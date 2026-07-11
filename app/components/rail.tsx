@@ -7,23 +7,25 @@ import type { LucideIcon } from "lucide-react";
 import { SeoOrb } from "@/components/seo-orb";
 import { SiteLogo } from "@/components/site-logo";
 import { NotificationBell } from "@/components/notify-bell";
+import { LangToggle } from "@/components/lang-toggle";
 import { useSite } from "@/components/providers";
 import { useApi } from "@/components/use-api";
+import { useT } from "@/lib/i18n";
 import { SITES, SITE_ORDER } from "@/lib/sites";
 import type { AgentsResponse, TodayResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const NAV: { href: string; label: string; Icon: LucideIcon }[] = [
-  { href: "/today", label: "Сегодня", Icon: Sunrise },
-  { href: "/", label: "Дашборд", Icon: LayoutDashboard },
-  { href: "/timeline", label: "Динамика", Icon: LineChart },
-  { href: "/pult", label: "Пульт", Icon: Gauge },
-  { href: "/nodes", label: "Узлы", Icon: Radar },
-  { href: "/hypotheses", label: "Гипотезы", Icon: FlaskConical },
-  { href: "/roy", label: "Рой", Icon: Network },
-  { href: "/runs", label: "Сводки", Icon: ScrollText },
-  { href: "/report", label: "Отчёт", Icon: FileText },
-  { href: "/account", label: "Аккаунт", Icon: UserCircle2 },
+const NAV: { href: string; labelKey: string; Icon: LucideIcon }[] = [
+  { href: "/today", labelKey: "nav.today", Icon: Sunrise },
+  { href: "/", labelKey: "nav.dashboard", Icon: LayoutDashboard },
+  { href: "/timeline", labelKey: "nav.timeline", Icon: LineChart },
+  { href: "/pult", labelKey: "nav.pult", Icon: Gauge },
+  { href: "/nodes", labelKey: "nav.nodes", Icon: Radar },
+  { href: "/hypotheses", labelKey: "nav.hypotheses", Icon: FlaskConical },
+  { href: "/roy", labelKey: "nav.roy", Icon: Network },
+  { href: "/runs", labelKey: "nav.runs", Icon: ScrollText },
+  { href: "/report", labelKey: "nav.report", Icon: FileText },
+  { href: "/account", labelKey: "nav.account", Icon: UserCircle2 },
 ];
 
 /** Tooltip that flies out to the right of a rail control. */
@@ -43,6 +45,7 @@ function Flyout({ children }: { children: React.ReactNode }) {
 export function Rail() {
   const pathname = usePathname();
   const { site, setSite, tint } = useSite();
+  const { t } = useT();
   const { data } = useApi<AgentsResponse>("/api/agents");
   const { data: today } = useApi<TodayResponse>("/api/today");
   const todayCount = today?.actions?.length ?? 0;
@@ -56,21 +59,22 @@ export function Rail() {
       <Link href="/" className="group relative flex flex-col items-center" aria-label="Mr.Seo">
         <SeoOrb size={38} state="idle" tint={tint} interactive />
         <span className="cap mt-2 text-[8px] tracking-[0.18em] text-ghost">MR.SEO</span>
-        <Flyout>Mr.Seo — на главную</Flyout>
+        <Flyout>{t("nav.brand_home")}</Flyout>
       </Link>
 
       <div className="rule-x mt-5 w-8" />
 
       {/* nav */}
       <nav className="mt-4 flex flex-col items-center gap-1">
-        {NAV.map(({ href, label, Icon }) => {
+        {NAV.map(({ href, labelKey, Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           const badge = href === "/today" && todayCount > 0 ? todayCount : 0;
+          const label = t(labelKey);
           return (
             <Link
               key={href}
               href={href}
-              aria-label={badge ? `${label} · ${badge} действий ждут` : label}
+              aria-label={badge ? t("nav.badge_actions", { label, count: badge }) : label}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "focus-ring group relative flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
@@ -94,7 +98,7 @@ export function Rail() {
 
       {/* site channels — HUD switcher */}
       <div className="mt-auto flex flex-col items-center gap-2.5 pt-6">
-        <span className="cap text-[8px] tracking-[0.16em] text-ghost">КАНАЛ</span>
+        <span className="cap text-[8px] tracking-[0.16em] text-ghost">{t("nav.channel")}</span>
         {SITE_ORDER.map((k) => {
           const s = SITES[k];
           const on = k === site;
@@ -121,9 +125,15 @@ export function Rail() {
         <div className="group relative flex h-8 w-8 items-center justify-center">
           <span className="warm-pulse h-2 w-2 rounded-full" style={{ background: royColor }} />
           <Flyout>
-            {data ? `Рой: ${working} в работе${anyError ? " · сбой узла" : ""}` : "Рой подключается…"}
+            {data
+              ? t("nav.roy_working", { count: working }) + (anyError ? t("nav.roy_node_fail") : "")
+              : t("nav.roy_connecting")}
           </Flyout>
         </div>
+
+        {/* язык интерфейса */}
+        <div className="rule-x mt-1 w-8" />
+        <LangToggle className="pb-1" />
       </div>
     </aside>
   );

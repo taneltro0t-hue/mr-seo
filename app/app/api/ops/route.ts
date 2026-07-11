@@ -17,7 +17,7 @@ const PY = path.join(SEO_AGENT_ROOT, "venv", "bin", "python");
 const OPS = path.join(SEO_AGENT_ROOT, "swarm", "ops.py");
 const run = promisify(execFile);
 
-const SITE_KEY_RE = /^[a-z0-9_-]{2,24}$/;
+const ALLOWED_SITES = new Set(["mysite", "demo2", "demo3"]);
 
 async function ops(args: string[], timeout = 90_000) {
   const { stdout } = await run(PY, [OPS, ...args], {
@@ -53,21 +53,21 @@ export async function POST(req: NextRequest) {
     if (action === "recrawl") {
       const site = String(body?.site ?? "");
       const url = String(body?.url ?? "");
-      if (!ALLOWED_SITE_KEY_RE.test(site) || !/^https?:\/\//.test(url)) {
+      if (!ALLOWED_SITES.has(site) || !/^https?:\/\//.test(url)) {
         return Response.json({ ok: false, error: "неверный site/url" }, { status: 400 });
       }
       return Response.json(await ops(["recrawl", site, url]));
     }
     if (action === "recrawl_quota") {
       const site = String(body?.site ?? "");
-      if (!ALLOWED_SITE_KEY_RE.test(site)) {
+      if (!ALLOWED_SITES.has(site)) {
         return Response.json({ ok: false, error: "неверный site" }, { status: 400 });
       }
       return Response.json(await ops(["recrawl_quota", site]));
     }
     if (action === "aibots") {
       const site = String(body?.site ?? "");
-      if (!ALLOWED_SITE_KEY_RE.test(site)) {
+      if (!ALLOWED_SITES.has(site)) {
         return Response.json({ ok: false, error: "неверный site" }, { status: 400 });
       }
       return Response.json(await ops(["aibots", site]));
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     if (action === "indexnow") {
       const site = String(body?.site ?? "");
       const url = String(body?.url ?? "");
-      if (!ALLOWED_SITE_KEY_RE.test(site) || !/^https?:\/\//.test(url)) {
+      if (!ALLOWED_SITES.has(site) || !/^https?:\/\//.test(url)) {
         return Response.json({ ok: false, error: "неверный site/url" }, { status: 400 });
       }
       return Response.json(await ops(["indexnow", site, url]));

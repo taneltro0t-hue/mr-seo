@@ -7,6 +7,7 @@ import { useMemo, useRef, useState } from "react";
 import { useSite } from "@/components/providers";
 import { useApi } from "@/components/use-api";
 import { PageHead, Skeleton, TrendPill } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import type {
   TimelineEvent,
   TimelineEventType,
@@ -18,11 +19,12 @@ import { splitQueryTag } from "@/lib/utils";
 
 const PALETTE = ["#8b93ff", "#38e8d0", "#f4c25a", "#4bd39a", "#ff6b6b", "#c08bff", "#5ad9ff", "#ff9f6b"];
 
+// label — ключ i18n, резолвится через t() на рендере
 const EV: Record<TimelineEventType, { label: string; color: string; Icon: LucideIcon }> = {
-  commit: { label: "Правка", color: "#8b93ff", Icon: GitMerge },
-  bridge: { label: "Мост", color: "#38e8d0", Icon: GitPullRequestArrow },
-  hypothesis: { label: "Гипотеза", color: "#f4c25a", Icon: FlaskConical },
-  verdict: { label: "Вердикт", color: "#4bd39a", Icon: ClipboardCheck },
+  commit: { label: "timeline.ev_commit", color: "#8b93ff", Icon: GitMerge },
+  bridge: { label: "timeline.ev_bridge", color: "#38e8d0", Icon: GitPullRequestArrow },
+  hypothesis: { label: "timeline.ev_hypothesis", color: "#f4c25a", Icon: FlaskConical },
+  verdict: { label: "timeline.ev_verdict", color: "#4bd39a", Icon: ClipboardCheck },
 };
 
 function eventColor(e: TimelineEvent): string {
@@ -47,6 +49,7 @@ const fmtFull = (ds: string) => {
 };
 
 export function TimelineView() {
+  const { t } = useT();
   const { site } = useSite();
   const { data, loading } = useApi<TimelineResponse>(`/api/timeline?site=${site}&days=45`);
 
@@ -59,9 +62,9 @@ export function TimelineView() {
   return (
     <div className="space-y-10">
       <PageHead
-        eyebrow="ROI · динамика"
-        title="Позиции и правки"
-        lede="Линии — позиции якорных запросов (чем выше, тем ближе к топу). Вертикальные метки — реальные действия роя. Видно глазами: правка → график двинулся."
+        eyebrow={t("timeline.eyebrow")}
+        title={t("timeline.title")}
+        lede={t("timeline.lede")}
       />
 
       {keys.length === 0 ? (
@@ -70,9 +73,9 @@ export function TimelineView() {
             <LineChart size={22} className="text-faint" />
           </div>
           <div>
-            <div className="font-display text-lg font-500 text-ink">Истории пока нет</div>
+            <div className="font-display text-lg font-500 text-ink">{t("timeline.empty_title")}</div>
             <p className="mx-auto mt-2 max-w-[360px] text-[13px] leading-relaxed text-faint">
-              График появится, когда накопится несколько сканов позиций по якорным запросам этого проекта.
+              {t("timeline.empty_body")}
             </p>
           </div>
         </div>
@@ -111,6 +114,7 @@ function PositionChart({
   keys: string[];
   events: TimelineEvent[];
 }) {
+  const { t } = useT();
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<HoverState | null>(null);
 
@@ -221,7 +225,7 @@ function PositionChart({
         onMouseMove={onMove}
         onMouseLeave={() => setHover(null)}
         role="img"
-        aria-label="График позиций якорных запросов с метками правок"
+        aria-label={t("timeline.chart_aria")}
       >
         {/* horizontal gridlines + Y labels */}
         {yTicks.map((v) => {
@@ -237,7 +241,7 @@ function PositionChart({
         })}
         {/* top label — "лучше" */}
         <text x={PX0 - 8} y={PY0 - 6} textAnchor="end" fontSize={9} fill="rgba(255,255,255,0.24)" className="mono">
-          топ
+          {t("timeline.top_label")}
         </text>
 
         {/* X date labels */}
@@ -364,7 +368,7 @@ function PositionChart({
                   <div key={i} className="flex items-start gap-2">
                     <MetaIcon size={12} style={{ color: c }} className="mt-0.5 flex-none" />
                     <span className="text-[11px] leading-snug text-faint">
-                      <span className="font-600" style={{ color: c }}>{meta.label}: </span>
+                      <span className="font-600" style={{ color: c }}>{t(meta.label)}: </span>
                       {e.title.length > 90 ? e.title.slice(0, 90) + "…" : e.title}
                     </span>
                   </div>
@@ -381,6 +385,7 @@ function PositionChart({
 /* ================================ LEGEND ================================ */
 
 function Legend({ series, keys }: { series: Record<string, TimelinePoint[]>; keys: string[] }) {
+  const { t } = useT();
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {keys.map((k, i) => {
@@ -399,7 +404,7 @@ function Legend({ series, keys }: { series: Record<string, TimelinePoint[]>; key
               <div className="truncate text-[13px] font-600 text-ink" title={query}>{query}</div>
               {engine && (
                 <div className="cap mt-0.5" style={{ color: engine === "yandex" ? "#ff6b6b" : "#8b93ff" }}>
-                  {engine === "yandex" ? "Яндекс" : "Google"}
+                  {engine === "yandex" ? t("timeline.engine_yandex") : "Google"}
                 </div>
               )}
             </div>
@@ -415,16 +420,17 @@ function Legend({ series, keys }: { series: Record<string, TimelinePoint[]>; key
 }
 
 function EventKey() {
+  const { t } = useT();
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-white/[0.01] px-4 py-3">
-      <span className="cap text-ghost">Метки</span>
-      {(Object.keys(EV) as TimelineEventType[]).map((t) => {
-        const { label, color, Icon } = EV[t];
+      <span className="cap text-ghost">{t("timeline.markers")}</span>
+      {(Object.keys(EV) as TimelineEventType[]).map((ev) => {
+        const { label, color, Icon } = EV[ev];
         return (
-          <span key={t} className="inline-flex items-center gap-1.5">
+          <span key={ev} className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full" style={{ background: color }} />
             <Icon size={12} style={{ color }} />
-            <span className="text-[12px] text-muted">{label}</span>
+            <span className="text-[12px] text-muted">{t(label)}</span>
           </span>
         );
       })}

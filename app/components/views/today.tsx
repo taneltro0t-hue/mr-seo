@@ -21,19 +21,20 @@ import type { LucideIcon } from "lucide-react";
 import { useApi } from "@/components/use-api";
 import { SeoOrb } from "@/components/seo-orb";
 import { WeekFocus } from "@/components/views/today-focus";
-import { DispatchButton, plural } from "@/components/views/dashboard-insights";
+import { DispatchButton } from "@/components/views/dashboard-insights";
 import { notifyTodayActions } from "@/components/notify-bell";
 import { CopyButton, IndexTag, PageHead, SectionLabel, Skeleton } from "@/components/ui";
+import { useT } from "@/lib/i18n";
 import type { SwarmTask, TasksResponse, TodayAction, TodayActionKind, TodayNight, TodayResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-const KIND: Record<TodayActionKind, { label: string; color: string; Icon: LucideIcon }> = {
-  alert: { label: "Тревога", color: "#ff6b6b", Icon: TriangleAlert },
-  merge: { label: "Слить ветку", color: "#8b93ff", Icon: GitMerge },
-  review: { label: "Ответить", color: "#f4c25a", Icon: MessageSquareText },
-  draft: { label: "Черновик", color: "#38e8d0", Icon: FileText },
-  verify: { label: "Проверить", color: "#8b93ff", Icon: FlaskConical },
-  task: { label: "В очереди", color: "rgba(255,255,255,0.42)", Icon: ListChecks },
+const KIND: Record<TodayActionKind, { labelKey: string; color: string; Icon: LucideIcon }> = {
+  alert: { labelKey: "today.kind_alert", color: "#ff6b6b", Icon: TriangleAlert },
+  merge: { labelKey: "today.kind_merge", color: "#8b93ff", Icon: GitMerge },
+  review: { labelKey: "today.kind_review", color: "#f4c25a", Icon: MessageSquareText },
+  draft: { labelKey: "today.kind_draft", color: "#38e8d0", Icon: FileText },
+  verify: { labelKey: "today.kind_verify", color: "#8b93ff", Icon: FlaskConical },
+  task: { labelKey: "today.kind_task", color: "rgba(255,255,255,0.42)", Icon: ListChecks },
 };
 
 /** alert всегда сверху, дальше по возрастанию priority (1 = высший). */
@@ -51,6 +52,7 @@ function sortActions(actions: TodayAction[]): TodayAction[] {
 }
 
 export function TodayView() {
+  const { t } = useT();
   const { data, loading } = useApi<TodayResponse>("/api/today");
   const actionCount = data?.actions?.length ?? 0;
 
@@ -67,10 +69,10 @@ export function TodayView() {
   return (
     <div className="space-y-12 lg:space-y-16">
       <PageHead
-        eyebrow="Утренняя сводка"
-        title="Сегодня"
-        lede="Что рой сделал ночью и что ждёт вашего клика. За полминуты — вся картина дня."
-        right={<span className="cap rounded-full border border-line px-2.5 py-1 text-faint">скан {data.date}</span>}
+        eyebrow={t("today.eyebrow")}
+        title={t("nav.today")}
+        lede={t("today.lede")}
+        right={<span className="cap rounded-full border border-line px-2.5 py-1 text-faint">{t("today.scan", { date: data.date })}</span>}
       />
 
       {/* ГЕРОЙ — фокус недели: три директивы максимальной отдачи */}
@@ -81,14 +83,14 @@ export function TodayView() {
         <section className="min-w-0">
           <div className="mb-5 flex items-baseline gap-3">
             <IndexTag n="01" />
-            <SectionLabel>Ночью рой сделал</SectionLabel>
+            <SectionLabel>{t("today.night_did")}</SectionLabel>
             <span className="mono text-[11px] text-faint">{night.length || "—"}</span>
           </div>
           {night.length === 0 ? (
             <EmptyState
               Icon={Moon}
-              title="Рой спал"
-              body="За ночь не было ни сканов, ни правок. Ближайший цикл соберёт свежие данные автоматически."
+              title={t("today.night_empty_title")}
+              body={t("today.night_empty_body")}
             />
           ) : (
             <div className="flex flex-col">
@@ -103,14 +105,14 @@ export function TodayView() {
         <section className="min-w-0">
           <div className="mb-5 flex items-baseline gap-3">
             <IndexTag n="02" />
-            <SectionLabel>Ждёт твоего клика</SectionLabel>
+            <SectionLabel>{t("today.awaits_click")}</SectionLabel>
             <span className="mono text-[11px] text-faint">{actions.length || "—"}</span>
           </div>
           {actions.length === 0 ? (
             <EmptyState
               Icon={Sparkles}
-              title="Inbox zero — всё разгребено 🎉"
-              body="Ни одной задачи, требующей вашего решения. Рой продолжает работать в фоне — новые появятся здесь."
+              title={t("today.inbox_zero_title")}
+              body={t("today.inbox_zero_body")}
               tone="good"
             />
           ) : (
@@ -159,6 +161,7 @@ function NightRow({ item, index }: { item: TodayNight; index: number }) {
 /* ------------------------------ Карточки-действия ------------------------------ */
 
 function RunFixButton({ agent, label }: { agent: string; label: string }) {
+  const { t } = useT();
   const [state, setState] = useState<"idle" | "busy" | "done" | "err">("idle");
   const [msg, setMsg] = useState("");
   const fire = async () => {
@@ -171,8 +174,8 @@ function RunFixButton({ agent, label }: { agent: string; label: string }) {
         body: JSON.stringify({ agent }),
       });
       const d = await r.json();
-      if (d.status === "started") { setState("done"); setMsg(d.message ?? "запущено"); }
-      else { setState("err"); setMsg(d.message ?? "не вышло"); }
+      if (d.status === "started") { setState("done"); setMsg(d.message ?? t("today.run_started")); }
+      else { setState("err"); setMsg(d.message ?? t("today.run_failed")); }
     } catch (e) {
       setState("err"); setMsg(String(e).slice(0, 80));
     }
@@ -189,7 +192,7 @@ function RunFixButton({ agent, label }: { agent: string; label: string }) {
         )}
       >
         <Wrench size={13} className={state === "busy" ? "animate-spin" : undefined} />
-        {state === "done" ? "✓ запущено" : state === "busy" ? "запускаю…" : label}
+        {state === "done" ? t("today.run_done") : state === "busy" ? t("today.run_busy") : label}
       </button>
       {msg && <span className="text-[11px] leading-snug text-faint">{msg}</span>}
     </div>
@@ -197,8 +200,10 @@ function RunFixButton({ agent, label }: { agent: string; label: string }) {
 }
 
 function ActionCard({ action, index }: { action: TodayAction; index: number }) {
+  const { t } = useT();
   const meta = KIND[action.kind] ?? KIND.task;
-  const { Icon, color, label } = meta;
+  const { Icon, color, labelKey } = meta;
+  const label = t(labelKey);
   const isAlert = action.kind === "alert";
 
   return (
@@ -233,7 +238,7 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
           {action.fix.type === "run" && action.fix.agent ? (
             <RunFixButton agent={action.fix.agent} label={action.fix.label} />
           ) : action.fix.task ? (
-            <DispatchButton text={action.fix.task} idleLabel={action.fix.label} doneLabel="рой займётся" Icon={Wrench} />
+            <DispatchButton text={action.fix.task} idleLabel={action.fix.label} doneLabel={t("today.roy_will")} Icon={Wrench} />
           ) : null}
         </div>
       )}
@@ -245,7 +250,7 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
             <code className="mono min-w-0 flex-1 truncate text-[11.5px] text-iris/90" title={action.hint}>
               {action.hint}
             </code>
-            <CopyButton value={action.hint} label="Копировать" className="flex-none text-[11px]" />
+            <CopyButton value={action.hint} label={t("common.copy_label")} className="flex-none text-[11px]" />
           </div>
         </div>
       )}
@@ -259,7 +264,7 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
             rel="noopener noreferrer"
             className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ok px-3.5 py-2 text-[12px] font-600 text-base-2 transition-opacity hover:opacity-90"
           >
-            <MessageSquareText size={13} /> Ответить
+            <MessageSquareText size={13} /> {t("common.reply")}
           </a>
         </div>
       )}
@@ -272,17 +277,17 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
               <code className="mono min-w-0 flex-1 truncate rounded-lg border border-line bg-black/40 px-3 py-2 text-[11px] text-cyan/90" title={action.url}>
                 {action.url}
               </code>
-              <CopyButton value={action.url} label="Путь" className="flex-none text-[11px]" />
+              <CopyButton value={action.url} label={t("common.copy_path")} className="flex-none text-[11px]" />
             </div>
           )}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <DispatchButton
               text={`[draft-blog] Перенести черновик ${action.url ?? action.title} в блог low-light (draft2blog, после вычитки --vetted)`}
-              idleLabel="В блог"
-              doneLabel="в очереди"
+              idleLabel={t("today.to_blog")}
+              doneLabel={t("common.queued")}
               Icon={Send}
             />
-            <span className="text-[11px] leading-snug text-faint">Перенесём в блог после вашей вычитки</span>
+            <span className="text-[11px] leading-snug text-faint">{t("today.to_blog_hint")}</span>
           </div>
         </div>
       )}
@@ -304,9 +309,10 @@ function cleanTaskText(text: string): string {
 }
 
 function RoyHistory() {
+  const { t, tn } = useT();
   const { data } = useApi<TasksResponse>("/api/tasks");
   const [open, setOpen] = useState(false);
-  const done = (data?.tasks ?? []).filter((t) => t.status === "done");
+  const done = (data?.tasks ?? []).filter((tk) => tk.status === "done");
   if (done.length === 0) return null;
 
   return (
@@ -321,9 +327,9 @@ function RoyHistory() {
           className={cn("flex-none text-faint transition-transform duration-300", open && "rotate-90 text-iris")}
         />
         <History size={15} className="flex-none text-faint" />
-        <SectionLabel>История роя</SectionLabel>
+        <SectionLabel>{t("today.roy_history")}</SectionLabel>
         <span className="mono text-[11px] text-ghost">
-          {done.length} {plural(done.length, "задача", "задачи", "задач")} выполнено
+          {t("today.tasks_done", { count: done.length, word: tn("task", done.length) })}
         </span>
       </button>
 

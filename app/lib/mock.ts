@@ -42,21 +42,21 @@ const SEEDS: Record<SiteKey, Seed> = {
   mysite: {
     anchors: [
       {
-        q: "пример услуги город",
+        q: "студия звукозаписи город",
         url: "/volgograd",
         goalPos: 1,
         priority: "P0",
         engines: { yandex: engine([8.5, 8.5, 10.5, 7.6, 7.6]), google: engine([5.5, 3, 3, 5.5, 5.5]) },
       },
       {
-        q: "пример услуги город",
+        q: "студия звукозаписи столица",
         url: "/moscow",
         goalPos: 3,
         priority: "P0",
         engines: {},
       },
       {
-        q: "заказать съемку клипа в москве",
+        q: "заказать съемку клипа в столица",
         url: "/moscow",
         goalPos: 10,
         priority: "P1",
@@ -69,29 +69,29 @@ const SEEDS: Record<SiteKey, Seed> = {
       { engine: "bing", status: "error", clicks7d: 0, queries: 0, inTop10: 0, error: "HTTPSConnectionPool(host='ssl.bing.com', port=443): Max retries exceeded" },
     ],
     reputation: [
-      { key: "mysite_moscow", label: "Я.Карты · Город", rating: 4.8, reviews: 18, dRating: 0, dReviews: 0 },
-      { key: "mysite_volgograd", label: "Я.Карты · Город", rating: 4.9, reviews: 23, dRating: 0, dReviews: 1 },
+      { key: "mysite_point", label: "Я.Карты · Столица", rating: 4.8, reviews: 18, dRating: 0, dReviews: 0 },
+      { key: "mysite_point", label: "Я.Карты · Город", rating: 4.9, reviews: 23, dRating: 0, dReviews: 1 },
     ],
     clicks: [[8, 1], [12, 0], [8, 1], [12, 0], [7, 0]],
   },
   demo2: {
     anchors: [
       {
-        q: "пример запроса 1",
+        q: "пример запроса",
         url: "/",
         goalPos: 1,
         priority: "P0",
         engines: { yandex: engine([5.94, 5.83, 6.06, 6.24, 6.46]), google: engine([4.47, 4, 4, 4, 4]) },
       },
       {
-        q: "пример запроса 3",
+        q: "мужской клуб город",
         url: "/",
         goalPos: 3,
         priority: "P1",
         engines: { yandex: engine([3.2, 3.1, 3.0, 2.9, 2.8]) },
       },
       {
-        q: "пример запроса 2",
+        q: "пример запроса",
         url: "/",
         goalPos: 3,
         priority: "P1",

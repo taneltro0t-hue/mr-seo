@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Unbounded, Manrope, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LangProvider } from "@/lib/i18n";
 import { Providers } from "@/components/providers";
 
 const display = Unbounded({
@@ -37,7 +38,9 @@ export default function RootLayout({
       className={`${display.variable} ${sans.variable} ${mono.variable} h-full`}
     >
       <body className="min-h-full">
-        <Providers>{children}</Providers>
+        <LangProvider>
+          <Providers>{children}</Providers>
+        </LangProvider>
       </body>
     </html>
   );

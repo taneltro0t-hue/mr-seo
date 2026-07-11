@@ -1,4 +1,5 @@
 "use client";
+import { useT, DICT, type Lang } from "@/lib/i18n";
 
 import { Bell, BellOff, BellRing } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -15,6 +16,15 @@ function supported(): boolean {
  * Web-уведомление о делах дня — с троттлом (не чаще раза в 4 ч). Вызывается на
  * загрузке /today, если разрешение выдано и есть дела, ждущие клика.
  */
+
+function plainLang(): Lang {
+  try { return (localStorage.getItem("mrseo-lang") as Lang) || "ru"; } catch { return "ru"; }
+}
+function plainT(key: string): string {
+  const l = plainLang();
+  return DICT[l][key] ?? DICT.ru[key] ?? key;
+}
+
 export function notifyTodayActions(count: number) {
   if (!supported() || count <= 0) return;
   if (Notification.permission !== "granted") return;
@@ -22,9 +32,9 @@ export function notifyTodayActions(count: number) {
     const last = Number(localStorage.getItem(LAST_KEY) || 0);
     if (Date.now() - last < THROTTLE_MS) return;
     localStorage.setItem(LAST_KEY, String(Date.now()));
-    const word = count === 1 ? "дело ждёт" : count >= 2 && count <= 4 ? "дела ждут" : "дел ждут";
+    
     new Notification("Mr.Seo", {
-      body: `${count} ${word} клика`,
+      body: `${count} ${plainT(count === 1 ? "bell.one_waits" : "bell.many_wait")}`,
       tag: "mrseo-today",
       icon: "/icon.png",
     });
@@ -35,6 +45,7 @@ export function notifyTodayActions(count: number) {
 
 /** Колокольчик в рэйле: запрашивает разрешение на web-уведомления. */
 export function NotificationBell() {
+  const { t } = useT();
   const [perm, setPerm] = useState<NotificationPermission | null>(null);
 
   useEffect(() => {
@@ -49,7 +60,7 @@ export function NotificationBell() {
       const res = await Notification.requestPermission();
       setPerm(res);
       if (res === "granted") {
-        new Notification("Mr.Seo", { body: "Уведомления включены — сообщу, когда появятся дела." });
+        new Notification("Mr.Seo", { body: plainT("bell.enabled_body") });
       }
     } catch {
       /* ignore */
@@ -60,10 +71,10 @@ export function NotificationBell() {
   const denied = perm === "denied";
   const Icon = granted ? BellRing : denied ? BellOff : Bell;
   const tip = granted
-    ? "Уведомления включены"
+    ? t("bell.on")
     : denied
-      ? "Уведомления заблокированы в браузере"
-      : "Включить уведомления о делах";
+      ? t("bell.blocked")
+      : t("bell.enable");
 
   return (
     <div className="group relative flex items-center justify-center">

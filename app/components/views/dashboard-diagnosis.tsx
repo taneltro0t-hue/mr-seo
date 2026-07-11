@@ -7,7 +7,8 @@ import { KineticNumber } from "@/components/kinetic-number";
 import { Explain } from "@/components/explain";
 import { Sparkline } from "@/components/sparkline";
 import { SectionIntro, SectionLabel, Skeleton } from "@/components/ui";
-import { DispatchButton, plural } from "@/components/views/dashboard-insights";
+import { DispatchButton } from "@/components/views/dashboard-insights";
+import { useT } from "@/lib/i18n";
 import type {
   CannibalizationResponse,
   DecayResponse,
@@ -68,13 +69,14 @@ const ROW_IN = {
 /* ============================ section ============================ */
 
 export function DashboardDiagnosis({ site, index }: { site: SiteKey; index: number }) {
+  const { t } = useT();
   return (
     <section>
       <SectionIntro
         index={index}
-        eyebrow="Диагноз"
-        title="Что болит"
-        note="Что Яндекс выкинул из поиска, где страницы конкурируют друг с другом и где позиции угасают."
+        eyebrow={t("diag.eyebrow")}
+        title={t("diag.title")}
+        note={t("diag.note")}
       />
       <div className="mt-8 space-y-5">
         <ExcludedPanel site={site} />
@@ -90,20 +92,21 @@ export function DashboardDiagnosis({ site, index }: { site: SiteKey; index: numb
 /* ---------------------- A · Выпавшие из поиска ---------------------- */
 
 function ExcludedPanel({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const { data, loading } = useApi<ExcludedResponse>(`/api/webmaster?kind=excluded&site=${site}`);
 
   return (
     <div className="surface-line p-7">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <FileX2 size={18} className="text-warn" />
-        <SectionLabel>Выпавшие из поиска</SectionLabel>
+        <SectionLabel>{t("diag.excluded_title")}</SectionLabel>
         {data && (
           <div className="mono ml-auto flex items-center gap-2.5 text-[11px]">
             <span className="rounded-md border border-warn/25 bg-warn/10 px-2 py-1 text-warn">
-              выпало <span className="tabular font-600">{data.removed_count}</span>
+              {t("diag.removed")} <span className="tabular font-600">{data.removed_count}</span>
             </span>
             <span className="rounded-md border border-good/25 bg-good/10 px-2 py-1 text-good">
-              появилось <span className="tabular font-600">{data.appeared_count}</span>
+              {t("diag.appeared")} <span className="tabular font-600">{data.appeared_count}</span>
             </span>
           </div>
         )}
@@ -119,9 +122,9 @@ function ExcludedPanel({ site }: { site: SiteKey }) {
         <div className="mt-5 flex items-center gap-3 rounded-2xl border border-good/25 bg-good/[0.06] px-5 py-6">
           <ShieldCheck size={18} className="flex-none text-good" />
           <div>
-            <div className="text-sm font-600 text-good">Яндекс ничего не выкинул</div>
+            <div className="text-sm font-600 text-good">{t("diag.excl_ok_title")}</div>
             <p className="mt-1 text-xs leading-relaxed text-faint">
-              За период ни одна страница не выпала из поиска. Так и держим.
+              {t("diag.excl_ok_body")}
             </p>
           </div>
         </div>
@@ -133,6 +136,7 @@ function ExcludedPanel({ site }: { site: SiteKey }) {
 }
 
 function ExcludedList({ data }: { data: ExcludedResponse }) {
+  const { t } = useT();
   const rows = data.removed.slice(0, 12);
   return (
     <div className="mt-5">
@@ -153,7 +157,7 @@ function ExcludedList({ data }: { data: ExcludedResponse }) {
                 <div className="mono truncate text-[12.5px] text-ink" title={r.url}>
                   {shortPath(r.url)}
                 </div>
-                <div className="mono mt-1 text-[10px] text-ghost">выпала {shortDate(r.date)}</div>
+                <div className="mono mt-1 text-[10px] text-ghost">{t("diag.dropped_on", { date: shortDate(r.date) })}</div>
               </div>
               <span
                 className={cn(
@@ -169,7 +173,7 @@ function ExcludedList({ data }: { data: ExcludedResponse }) {
       </div>
       {data.removed_count > rows.length && (
         <div className="mono mt-3 text-[11px] text-faint">
-          показаны {rows.length} из {data.removed_count} — остальные в Вебмастере
+          {t("diag.shown_of", { n: rows.length, total: data.removed_count })}
         </div>
       )}
       {data.note && <p className="mt-3 max-w-2xl text-[11px] leading-relaxed text-faint">{data.note}</p>}
@@ -180,6 +184,7 @@ function ExcludedList({ data }: { data: ExcludedResponse }) {
 /* ------------------------- B · Каннибализация ------------------------- */
 
 function CannibalPanel({ site }: { site: SiteKey }) {
+  const { t, tn } = useT();
   const { data, loading } = useApi<CannibalizationResponse>(
     `/api/insights?kind=cannibalization&site=${site}`
   );
@@ -188,10 +193,10 @@ function CannibalPanel({ site }: { site: SiteKey }) {
     <div className="surface-line flex h-full flex-col p-7">
       <div className="mb-5 flex items-center gap-2.5">
         <Split size={18} className="text-iris" />
-        <SectionLabel>Каннибализация</SectionLabel>
+        <SectionLabel>{t("diag.cannibal_title")}</SectionLabel>
         {data && data.count > 0 && (
           <span className="mono ml-auto text-[11px] text-faint">
-            {data.count} {plural(data.count, "конфликт", "конфликта", "конфликтов")}
+            {data.count} {tn("conflict", data.count)}
           </span>
         )}
       </div>
@@ -205,8 +210,8 @@ function CannibalPanel({ site }: { site: SiteKey }) {
       ) : data.count === 0 ? (
         <DiagnosisEmpty
           good
-          title="Каннибализации нет"
-          body="Ни один запрос не тянут за собой сразу несколько страниц — сигналы не размываются."
+          title={t("diag.cannibal_empty_title")}
+          body={t("diag.cannibal_empty_body")}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -227,7 +232,7 @@ function CannibalPanel({ site }: { site: SiteKey }) {
                     {c.query}
                   </div>
                   <span className="mono flex-none text-[10px] text-ghost">
-                    {c.total_impressions} {plural(c.total_impressions, "показ", "показа", "показов")}
+                    {c.total_impressions} {tn("impression", c.total_impressions)}
                   </span>
                 </div>
 
@@ -238,7 +243,7 @@ function CannibalPanel({ site }: { site: SiteKey }) {
                         {shortPath(p.page)}
                       </span>
                       <span className="mono flex-none text-[10px] text-ghost">
-                        {p.impressions} пок.
+                        {t("diag.imp_abbr", { n: p.impressions })}
                       </span>
                       <span className="mono tabular flex-none rounded-md border border-line px-2 py-0.5 text-[11px] font-600 text-ink">
                         {p.position.toFixed(1).replace(/\.0$/, "")}
@@ -263,16 +268,17 @@ function CannibalPanel({ site }: { site: SiteKey }) {
 /* ---------------------------- C · Угасание ---------------------------- */
 
 function DecayPanel({ site }: { site: SiteKey }) {
+  const { t, tn } = useT();
   const { data, loading } = useApi<DecayResponse>(`/api/insights?kind=decay&site=${site}`);
 
   return (
     <div className="surface-line flex h-full flex-col p-7">
       <div className="mb-5 flex items-center gap-2.5">
         <TrendingDown size={18} className="text-warn" />
-        <SectionLabel>Угасание</SectionLabel>
+        <SectionLabel>{t("diag.decay_title")}</SectionLabel>
         {data && data.count > 0 && (
           <span className="mono ml-auto text-[11px] text-faint">
-            {data.count} {plural(data.count, "запрос", "запроса", "запросов")}
+            {data.count} {tn("query", data.count)}
           </span>
         )}
       </div>
@@ -286,8 +292,8 @@ function DecayPanel({ site }: { site: SiteKey }) {
       ) : data.count === 0 ? (
         <DiagnosisEmpty
           good
-          title="Ничего не угасает"
-          body="За 28 дней позиции целевых запросов держатся или растут — проседающих нет."
+          title={t("diag.decay_empty_title")}
+          body={t("diag.decay_empty_body")}
         />
       ) : (
         <div className="flex flex-col">
@@ -319,7 +325,7 @@ function DecayPanel({ site }: { site: SiteKey }) {
                     </span>
                     <span className="text-ghost">·</span>
                     <span className="text-faint">
-                      {r.impressions} {plural(r.impressions, "показ", "показа", "показов")}
+                      {r.impressions} {tn("impression", r.impressions)}
                     </span>
                   </div>
                 </div>
@@ -349,6 +355,7 @@ export function DiagnosticInstruments({ site }: { site: SiteKey }) {
 }
 
 function SqiInstrument({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const { data, loading } = useApi<SqiResponse>(`/api/webmaster?kind=sqi&site=${site}`);
 
   if (loading || !data) {
@@ -365,11 +372,11 @@ function SqiInstrument({ site }: { site: SiteKey }) {
       <div className="surface-line p-6">
         <div className="mb-3 flex items-center gap-2.5">
           <Radar size={16} className="text-cyan" />
-          <SectionLabel>ИКС</SectionLabel>
+          <SectionLabel>{t("diag.sqi_short")}</SectionLabel>
         </div>
         <DiagnosisEmpty
-          title="ИКС ещё не приходил"
-          body="Индекс качества сайта Яндекс отдаёт не сразу. Появится после ближайшей синхронизации Вебмастера."
+          title={t("diag.sqi_empty_title")}
+          body={t("diag.sqi_empty_body")}
         />
       </div>
     );
@@ -383,7 +390,7 @@ function SqiInstrument({ site }: { site: SiteKey }) {
     <div className="surface-line p-6">
       <div className="mb-4 flex items-center gap-2.5">
         <Radar size={16} className="text-cyan" />
-        <SectionLabel>ИКС · Яндекс</SectionLabel>
+        <SectionLabel>{t("diag.sqi_title")}</SectionLabel>
       </div>
       <div className="flex items-end justify-between gap-4">
         <div>
@@ -391,16 +398,16 @@ function SqiInstrument({ site }: { site: SiteKey }) {
             <span className="mono tabular font-display text-5xl font-600 leading-none text-ink">
               <Explain
                 site={site}
-                metric="ИКС (индекс качества сайта)"
+                metric={t("diag.sqi_metric")}
                 value={data.current}
-                context={`изменение за период: ${deltaStr}; метрика Яндекса`}
+                context={t("diag.sqi_ctx", { delta: deltaStr })}
               >
                 <KineticNumber value={data.current} />
               </Explain>
             </span>
             <span className={cn("mono tabular mb-1 text-[13px] font-600", deltaTone)}>{deltaStr}</span>
           </div>
-          <div className="cap mt-2.5">индекс качества сайта</div>
+          <div className="cap mt-2.5">{t("diag.sqi_caption")}</div>
         </div>
         <div className="h-12 w-28 flex-none">
           <Sparkline values={data.history.map((p) => p.value)} color="#38e8d0" height={48} />
@@ -411,6 +418,7 @@ function SqiInstrument({ site }: { site: SiteKey }) {
 }
 
 function LinksInstrument({ site }: { site: SiteKey }) {
+  const { t, tn } = useT();
   const { data, loading } = useApi<LinksResponse>(`/api/webmaster?kind=links&site=${site}`);
 
   if (loading || !data) {
@@ -429,11 +437,11 @@ function LinksInstrument({ site }: { site: SiteKey }) {
       <div className="surface-line p-6">
         <div className="mb-3 flex items-center gap-2.5">
           <Link2 size={16} className="text-iris" />
-          <SectionLabel>Ссылки</SectionLabel>
+          <SectionLabel>{t("diag.links_short")}</SectionLabel>
         </div>
         <DiagnosisEmpty
-          title="Данных по ссылкам пока нет"
-          body="Как только Вебмастер отдаст внешние ссылки, здесь появятся тотал и свежие доноры."
+          title={t("diag.links_empty_title")}
+          body={t("diag.links_empty_body")}
         />
       </div>
     );
@@ -445,14 +453,14 @@ function LinksInstrument({ site }: { site: SiteKey }) {
     <div className="surface-line p-6">
       <div className="mb-4 flex items-center gap-2.5">
         <Link2 size={16} className="text-iris" />
-        <SectionLabel>Внешние ссылки</SectionLabel>
+        <SectionLabel>{t("diag.links_title")}</SectionLabel>
       </div>
       <div className="flex items-end gap-2.5">
         <span className="mono tabular font-display text-5xl font-600 leading-none text-ink">
           <KineticNumber value={total} />
         </span>
         <span className="cap mb-1.5">
-          {plural(total, "донор", "донора", "доноров")}
+          {tn("donor", total)}
         </span>
       </div>
 

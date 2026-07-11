@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useSite } from "@/components/providers";
+import { useT } from "@/lib/i18n";
 import { SiteLogo } from "@/components/site-logo";
 import { PageHead, SectionIntro, Skeleton, ToneDot } from "@/components/ui";
 import { cabinetGroups } from "@/lib/ecosystem";
@@ -109,9 +110,10 @@ function Directive({ tone, children }: { tone: Tone; children: React.ReactNode }
 /* ---------------------------- site channel bar ---------------------------- */
 
 function ChannelBar({ site, onPick }: { site: SiteKey; onPick: (s: SiteKey) => void }) {
+  const { t } = useT();
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <span className="cap mr-1 text-ghost">Канал</span>
+      <span className="cap mr-1 text-ghost">{t("pult.channel")}</span>
       {SITE_ORDER.map((k) => {
         const s = SITES[k];
         const on = k === site;
@@ -143,13 +145,14 @@ function ChannelBar({ site, onPick }: { site: SiteKey; onPick: (s: SiteKey) => v
 
 export function PultView() {
   const { site, setSite } = useSite();
+  const { t } = useT();
 
   return (
     <div className="space-y-14">
       <PageHead
-        eyebrow="Операционный центр"
-        title="Пульт"
-        lede="Живые токены экосистемы, переобход страниц, доступ AI-ботов и прямые входы в кабинеты — по каждому каналу. Отсюда рой управляет инфраструктурой руками."
+        eyebrow={t("pult.eyebrow")}
+        title={t("nav.pult")}
+        lede={t("pult.lede")}
       />
 
       <TokensSection />
@@ -167,14 +170,15 @@ export function PultView() {
 
 /* --------------------------- 1. Токены и ключи --------------------------- */
 
-const TOKEN_ROWS: { key: keyof Omit<OpsStatus, "checked_at">; name: string; kind: string }[] = [
-  { key: "gsc_sa", name: "GSC · service account", kind: "Google" },
-  { key: "gsc_oauth", name: "GSC · запасной OAuth", kind: "Google" },
-  { key: "yandex", name: "Яндекс.Вебмастер", kind: "Yandex" },
-  { key: "bing", name: "Bing Webmaster", kind: "Bing" },
+const TOKEN_ROWS: { key: keyof Omit<OpsStatus, "checked_at">; nameKey: string; kind: string }[] = [
+  { key: "gsc_sa", nameKey: "pult.tok_gsc_sa", kind: "Google" },
+  { key: "gsc_oauth", nameKey: "pult.tok_gsc_oauth", kind: "Google" },
+  { key: "yandex", nameKey: "pult.tok_yandex", kind: "Yandex" },
+  { key: "bing", nameKey: "pult.tok_bing", kind: "Bing" },
 ];
 
 function TokensSection() {
+  const { t, lang } = useT();
   const [status, setStatus] = useState<OpsStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -218,7 +222,7 @@ function TokensSection() {
   const saveBing = useCallback(async () => {
     const key = bingKey.trim();
     if (!/^[A-Za-z0-9-]{16,128}$/.test(key)) {
-      setBing({ pending: false, msg: { ok: false, error: "Ключ 16–128 символов: буквы, цифры, дефис." } });
+      setBing({ pending: false, msg: { ok: false, error: t("pult.bing_key_rule") } });
       return;
     }
     setBing({ pending: true, msg: null });
@@ -228,24 +232,24 @@ function TokensSection() {
       setBingKey("");
       void load(true);
     }
-  }, [bingKey, load]);
+  }, [bingKey, load, t]);
 
   return (
     <section>
       <SectionIntro
         index="01"
-        eyebrow="Доступы"
-        title="Токены и ключи"
-        note="Один опрос — здоровье всех источников, откуда рой берёт цифры и куда пишет команды."
+        eyebrow={t("pult.tokens_eyebrow")}
+        title={t("pult.tokens_title")}
+        note={t("pult.tokens_note")}
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <GhostBtn onClick={() => load(true)} pending={checking} Icon={RefreshCw}>
-          Проверить сейчас
+          {t("pult.check_now")}
         </GhostBtn>
         {status?.checked_at && (
           <span className="cap text-ghost">
-            опрошено {new Date(status.checked_at).toLocaleString("ru-RU", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+            {t("pult.polled_at", { time: new Date(status.checked_at).toLocaleString(lang === "ru" ? "ru-RU" : "en-US", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }) })}
           </span>
         )}
       </div>
@@ -260,21 +264,21 @@ function TokensSection() {
               return (
                 <div key={row.key}>
                   <TokenRow
-                    name={row.name}
+                    name={t(row.nameKey)}
                     kind={row.kind}
                     state={st}
                     perpetual={row.key === "gsc_sa"}
                     action={
                       isOauth ? (
                         <GhostBtn onClick={doReauth} pending={reauth.pending} Icon={RotateCw}>
-                          Перевыпустить
+                          {t("pult.reissue")}
                         </GhostBtn>
                       ) : isBing ? (
                         <GhostBtn
                           onClick={() => setBingOpen((o) => !o)}
                           Icon={KeyRound}
                         >
-                          Обновить ключ
+                          {t("common.update_key")}
                         </GhostBtn>
                       ) : undefined
                     }
@@ -282,8 +286,8 @@ function TokensSection() {
                   {isOauth && reauth.msg && (
                     <Directive tone={reauth.msg.ok ? "good" : "warn"}>
                       {reauth.msg.ok
-                        ? reauth.msg.note ?? "Откроется браузер — подтвердите доступ, токен сохранится сам."
-                        : reauth.msg.error ?? "Не удалось запустить перевыпуск."}
+                        ? reauth.msg.note ?? t("pult.reauth_ok_fallback")
+                        : reauth.msg.error ?? t("pult.reauth_fail_fallback")}
                     </Directive>
                   )}
                   {isBing && bingOpen && (
@@ -295,7 +299,7 @@ function TokensSection() {
                         className="focus-ring group inline-flex items-center gap-2 rounded-lg text-[13px] text-muted transition-colors hover:text-ink"
                       >
                         <ExternalLink size={14} className="flex-none text-faint group-hover:text-iris" />
-                        Получить новый ключ в кабинете Bing Webmaster
+                        {t("pult.bing_get_key")}
                       </a>
                       <p className="cap text-ghost">Settings → API access</p>
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -309,7 +313,7 @@ function TokensSection() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter" && validBing && !bing.pending) saveBing();
                           }}
-                          placeholder="Вставьте API-ключ Bing Webmaster"
+                          placeholder={t("pult.bing_placeholder")}
                           className="focus-ring mono w-full flex-1 rounded-xl border border-line bg-black/40 px-4 py-3 text-[13px] text-ink placeholder:text-ghost"
                         />
                         <PrimaryBtn
@@ -318,15 +322,15 @@ function TokensSection() {
                           pending={bing.pending}
                           Icon={KeyRound}
                         >
-                          Сохранить и проверить
+                          {t("pult.save_and_check")}
                         </PrimaryBtn>
                       </div>
                       {bing.msg && (
                         <Directive tone={bing.msg.ok ? "good" : "warn"}>
-                          <span className="opacity-60">bing · ключ → </span>
+                          <span className="opacity-60">{t("pult.bing_key_arrow")}</span>
                           {bing.msg.ok
-                            ? bing.msg.note ?? "сохранён и проверен"
-                            : bing.msg.error ?? "не удалось сохранить"}
+                            ? bing.msg.note ?? t("pult.bing_saved")
+                            : bing.msg.error ?? t("pult.bing_save_fail")}
                         </Directive>
                       )}
                     </div>
@@ -352,6 +356,7 @@ function TokenRow({
   perpetual?: boolean;
   action?: React.ReactNode;
 }) {
+  const { t } = useT();
   const tone: Tone = state.ok ? "good" : "warn";
   return (
     <div className="surface-line flex items-center gap-4 px-5 py-4">
@@ -364,12 +369,12 @@ function TokenRow({
           <span className="font-600">{name}</span>
           {perpetual && (
             <span className="cap rounded-full border border-line px-2 py-0.5 text-[9px] text-faint">
-              бессрочный
+              {t("pult.perpetual")}
             </span>
           )}
         </div>
         <div className={cn("mt-1 truncate text-[12px]", state.ok ? "text-muted" : "text-warn")}>
-          {state.ok ? state.note ?? "на связи" : state.error ?? "недоступен"}
+          {state.ok ? state.note ?? t("pult.online") : state.error ?? t("pult.offline")}
         </div>
       </div>
       {action}
@@ -381,6 +386,7 @@ function TokenRow({
 /* ----------------------------- 2. Переобход ----------------------------- */
 
 function RecrawlSection({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const [quota, setQuota] = useState<OpsQuota | null>(null);
   const [quotaLoading, setQuotaLoading] = useState(true);
   const [url, setUrl] = useState("");
@@ -435,9 +441,9 @@ function RecrawlSection({ site }: { site: SiteKey }) {
     <section>
       <SectionIntro
         index="02"
-        eyebrow="Герой-операция"
-        title="Переобход"
-        note="Ставит страницу в очередь Яндекс.Вебмастера и (по ключу) пингует IndexNow. Живой остаток дневной квоты — слева."
+        eyebrow={t("pult.recrawl_eyebrow")}
+        title={t("pult.recrawl_title")}
+        note={t("pult.recrawl_note")}
       />
 
       <div className="surface-hero glass mt-6 overflow-hidden p-6 sm:p-8">
@@ -445,7 +451,7 @@ function RecrawlSection({ site }: { site: SiteKey }) {
           {/* live quota */}
           <div className="flex flex-col justify-between gap-5 lg:border-r lg:border-line lg:pr-8">
             <div>
-              <div className="cap">Остаток квоты · сегодня</div>
+              <div className="cap">{t("pult.quota_remainder")}</div>
               <div className="mt-3 flex items-end gap-2">
                 {quotaLoading ? (
                   <Skeleton className="h-[46px] w-24" />
@@ -468,13 +474,13 @@ function RecrawlSection({ site }: { site: SiteKey }) {
               )}
             </div>
             {!quotaLoading && quota && !quota.ok && (
-              <div className="mono text-[11px] text-warn">{quota.error ?? "квота недоступна"}</div>
+              <div className="mono text-[11px] text-warn">{quota.error ?? t("pult.quota_unavailable")}</div>
             )}
           </div>
 
           {/* url + actions */}
           <div>
-            <label className="cap block">URL страницы</label>
+            <label className="cap block">{t("pult.url_label")}</label>
             <input
               type="url"
               inputMode="url"
@@ -485,26 +491,26 @@ function RecrawlSection({ site }: { site: SiteKey }) {
             />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <PrimaryBtn onClick={doRecrawl} disabled={!validUrl} pending={recrawl.pending} Icon={Send}>
-                Отправить на переобход
+                {t("pult.send_recrawl")}
               </PrimaryBtn>
               <GhostBtn onClick={doIndexnow} disabled={!validUrl} pending={indexnow.pending} Icon={Zap}>
                 + IndexNow
               </GhostBtn>
               {!validUrl && url.length > 0 && (
-                <span className="mono text-[11px] text-faint">нужен полный https://…</span>
+                <span className="mono text-[11px] text-faint">{t("pult.need_full_url")}</span>
               )}
             </div>
 
             {recrawl.msg && (
               <Directive tone={recrawl.msg.ok ? "good" : "warn"}>
                 <span className="opacity-60">recrawl · yandex → </span>
-                {recrawl.msg.ok ? recrawl.msg.note ?? "принято" : recrawl.msg.error ?? "отказ"}
+                {recrawl.msg.ok ? recrawl.msg.note ?? t("pult.recrawl_accepted") : recrawl.msg.error ?? t("pult.recrawl_rejected")}
               </Directive>
             )}
             {indexnow.msg && (
               <Directive tone={indexnow.msg.ok ? "good" : "ok"}>
                 <span className="opacity-60">indexnow → </span>
-                {indexnow.msg.ok ? indexnow.msg.note ?? "пинг отправлен" : indexnow.msg.error ?? "ключ не задан"}
+                {indexnow.msg.ok ? indexnow.msg.note ?? t("pult.indexnow_sent") : indexnow.msg.error ?? t("pult.indexnow_no_key")}
               </Directive>
             )}
           </div>
@@ -517,6 +523,7 @@ function RecrawlSection({ site }: { site: SiteKey }) {
 /* ----------------------------- 3. AI-доступ ----------------------------- */
 
 function AiAccessSection({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const [res, setRes] = useState<OpsAiBots | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -535,16 +542,16 @@ function AiAccessSection({ site }: { site: SiteKey }) {
     <section>
       <SectionIntro
         index="03"
-        eyebrow="Доступ нейросетей"
-        title="AI-боты"
-        note="Читает robots.txt сайта: не закрыли ли мы дорогу GPTBot, ClaudeBot, PerplexityBot и другим. Заблокированные — красным."
+        eyebrow={t("pult.ai_eyebrow")}
+        title={t("pult.ai_title")}
+        note={t("pult.ai_note")}
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <PrimaryBtn onClick={check} pending={pending} Icon={Bot}>
-          Проверить AI-ботов
+          {t("pult.check_ai")}
         </PrimaryBtn>
-        <span className="cap text-ghost">канал · {SITES[site].label}</span>
+        <span className="cap text-ghost">{t("pult.channel_of", { label: SITES[site].label })}</span>
       </div>
 
       {res && (
@@ -596,7 +603,7 @@ function AiAccessSection({ site }: { site: SiteKey }) {
               </div>
             </>
           ) : (
-            <Directive tone="warn">{res.error ?? "не удалось прочитать robots.txt"}</Directive>
+            <Directive tone="warn">{res.error ?? t("pult.robots_fail")}</Directive>
           )}
         </div>
       )}
@@ -607,14 +614,15 @@ function AiAccessSection({ site }: { site: SiteKey }) {
 /* ----------------------------- 4. Кабинеты ----------------------------- */
 
 function CabinetsSection({ site }: { site: SiteKey }) {
+  const { t } = useT();
   const groups = cabinetGroups(site);
   return (
     <section>
       <SectionIntro
         index="04"
-        eyebrow="Прямые входы"
-        title="Кабинеты"
-        note="Deep-links в панели по выбранному каналу. Открываются в новой вкладке, логин переживают. ⚠ — путь по конвенции."
+        eyebrow={t("pult.cab_eyebrow")}
+        title={t("pult.cab_title")}
+        note={t("pult.cab_note")}
       />
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

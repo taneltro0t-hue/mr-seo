@@ -67,8 +67,8 @@ def process() -> list[str]:
         um, qm = URL_RE.search(text), QUERY_RE.search(text)
         path = um.group(1).rstrip(":,") if um else "/"
         query = qm.group(1) if qm else text[:50]
-        from sites_config import SITES as _S
-        base = _S.get(site, {}).get("url", "")
+        base = {"mysite": "https://example.com", "demo2": "https://example.org",
+                "demo3": "https://example.net"}.get(site, "")
         url = path if path.startswith("http") else base + path
         steps = []
         # 1) переобход + indexnow

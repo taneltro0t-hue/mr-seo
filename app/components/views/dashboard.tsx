@@ -16,10 +16,14 @@ import { Explain } from "@/components/explain";
 import { HudReadout, IndexTag, SectionIntro, SectionLabel, Skeleton, Stagger, StaggerItem, ToneDot, TrendPill } from "@/components/ui";
 import type { Advice, Anchor, Overview, Priority, ScoreBreakdownItem, SiteKey, SourceStatus, Tone } from "@/lib/types";
 import type { SiteTint } from "@/components/providers";
+import { useT, type TApi } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const ENGINE = { yandex: "Яндекс", google: "Google", bing: "Bing" } as const;
-const PRIO_LABEL: Record<Priority, string> = { high: "Высокий", medium: "Средний", low: "Низкий" };
+const ENGINE = { yandex: "Yandex", google: "Google", bing: "Bing" } as const;
+/** Ярлык движка с учётом языка (только Яндекс переводится → Yandex). */
+function engineLabel(e: keyof typeof ENGINE, t: TApi["t"]) {
+  return e === "yandex" ? t("dash.eng_yandex") : ENGINE[e];
+}
 const TONE_HEX: Record<Tone, string> = { good: "#4bd39a", ok: "#f4c25a", warn: "#ff6b6b" };
 const TONE_GRAD: Record<Tone, string> = {
   good: "linear-gradient(120deg,#ffffff 0%,#8ff3d8 55%,#4bd39a 100%)",
@@ -28,6 +32,7 @@ const TONE_GRAD: Record<Tone, string> = {
 };
 
 export function DashboardView() {
+  const { t } = useT();
   const { site, tint, setTint } = useSite();
   const { data, loading } = useApi<Overview>(`/api/overview?site=${site}`);
 
@@ -45,7 +50,7 @@ export function DashboardView() {
 
       {/* DIRECTIVES — editorial command list, on black */}
       <section>
-        <SectionIntro index={1} eyebrow="Директивы" title="Что делать" />
+        <SectionIntro index={1} eyebrow={t("dash.directives_eyebrow")} title={t("dash.directives_title")} />
         <div className="mt-8">
           {actionable.length === 0 ? (
             <AllGood advice={data.advice} />
@@ -59,9 +64,9 @@ export function DashboardView() {
       <section>
         <SectionIntro
           index={2}
-          eyebrow="Быстрые победы"
-          title="Дожать за один ход"
-          note="Запросы на границе топа. Нажмите «Поручить рою» — исполнитель усилит страницу и отправит на переобход."
+          eyebrow={t("dash.qw_eyebrow")}
+          title={t("dash.qw_title")}
+          note={t("dash.qw_note")}
         />
         <div className="mt-8">
           <QuickWinsPanel site={site} />
@@ -72,9 +77,9 @@ export function DashboardView() {
       <section>
         <SectionIntro
           index={3}
-          eyebrow="Якорные запросы"
-          title="Позиции по дням"
-          note="Смотрим только на целевые ВЧ-запросы — агрегаты Яндекса плавают и не показательны."
+          eyebrow={t("dash.anchors_eyebrow")}
+          title={t("dash.anchors_title")}
+          note={t("dash.anchors_note")}
         />
         <Stagger className="mt-8 grid gap-px overflow-hidden rounded-[var(--radius-xl2)] border border-line bg-line md:grid-cols-2 xl:grid-cols-3" step={0.07}>
           {data.anchors.map((a) => (
@@ -93,7 +98,7 @@ export function DashboardView() {
 
       {/* INFRASTRUCTURE */}
       <section>
-        <SectionIntro index={6} eyebrow="Инфраструктура" title="Данные и репутация" />
+        <SectionIntro index={6} eyebrow={t("dash.infra_eyebrow")} title={t("dash.infra_title")} />
         <div className="mt-8 space-y-8">
           <DiagnosticInstruments site={site} />
           <div className="grid gap-8 lg:grid-cols-2">
@@ -109,6 +114,7 @@ export function DashboardView() {
 /* ================================ HERO ================================ */
 
 function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
+  const { t, tn } = useT();
   const { score, site } = data;
   const needsAttention = score.tone === "warn";
   const liveSources = data.sources.filter((s) => s.status === "live");
@@ -116,9 +122,9 @@ function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
   const bestRep = [...data.reputation].sort((a, b) => b.rating - a.rating)[0] ?? null;
 
   const gauges = [
-    { label: "Переходы 7д", value: String(clicks7d) },
-    { label: "Источники", value: `${liveSources.length}/${data.sources.length}` },
-    ...(bestRep ? [{ label: "Рейтинг", value: `${bestRep.rating.toFixed(1)}★` }] : []),
+    { label: t("dash.gauge_clicks"), value: String(clicks7d) },
+    { label: t("dash.gauge_sources"), value: `${liveSources.length}/${data.sources.length}` },
+    ...(bestRep ? [{ label: t("dash.gauge_rating"), value: `${bestRep.rating.toFixed(1)}★` }] : []),
   ];
 
   return (
@@ -136,9 +142,9 @@ function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
         <span className="mono text-[10.5px] tracking-[0.1em] text-ghost">{site.domain}</span>
         <div className="ml-auto flex items-center gap-2">
           {data.mock && (
-            <span className="cap rounded-full border border-ok/25 bg-ok/10 px-2.5 py-1 text-ok">демо</span>
+            <span className="cap rounded-full border border-ok/25 bg-ok/10 px-2.5 py-1 text-ok">{t("dash.demo")}</span>
           )}
-          <span className="cap rounded-full border border-line px-2.5 py-1 text-faint">скан {data.date}</span>
+          <span className="cap rounded-full border border-line px-2.5 py-1 text-faint">{t("dash.scan", { date: data.date })}</span>
         </div>
       </div>
 
@@ -159,15 +165,15 @@ function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
             >
               <Explain
                 site={site.key}
-                metric="Здоровье сайта"
+                metric={t("dash.health_metric")}
                 value={score.value}
-                context={`вердикт: ${score.verdict}; шкала 0–100`}
+                context={t("dash.health_ctx", { verdict: score.verdict })}
               >
                 <KineticNumber value={score.value} duration={1.8} />
               </Explain>
             </span>
             <div className="mb-4 flex flex-col items-start gap-2">
-              <span className="cap">Здоровье</span>
+              <span className="cap">{t("dash.health")}</span>
               <span className="mono text-sm text-faint">/ 100</span>
             </div>
           </div>
@@ -214,7 +220,7 @@ function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
         ))}
         {bestRep && (
           <HudReadout
-            label="Репутация"
+            label={t("dash.reputation")}
             accent="#f4c25a"
             value={
               <span className="flex items-baseline gap-1.5">
@@ -222,7 +228,7 @@ function HeroStage({ data, tint }: { data: Overview; tint: SiteTint }) {
                 <span className="text-[13px]">★</span>
               </span>
             }
-            sub={bestRep.dReviews != null && bestRep.dReviews > 0 ? `+${bestRep.dReviews} отзывов / нед` : bestRep.label}
+            sub={bestRep.dReviews != null && bestRep.dReviews > 0 ? `+${bestRep.dReviews} ${tn("review", bestRep.dReviews)} ${t("dash.per_week")}` : bestRep.label}
             className="py-4 sm:py-5"
           />
         )}
@@ -326,6 +332,7 @@ function ScoreReadout({ item, index }: { item: ScoreBreakdownItem; index: number
 /* ============================== DIRECTIVES ============================== */
 
 function Directives({ advice }: { advice: Advice[] }) {
+  const { t } = useT();
   return (
     <div className="flex flex-col">
       {advice.map((a, i) => (
@@ -361,7 +368,7 @@ function Directives({ advice }: { advice: Advice[] }) {
                   border: `1px solid ${TONE_HEX[a.tone]}33`,
                 }}
               >
-                {PRIO_LABEL[a.priority]}
+                {t(`dash.prio_${a.priority}`)}
               </span>
               <span className="cap text-ghost">{a.tag}</span>
             </div>
@@ -377,6 +384,7 @@ function Directives({ advice }: { advice: Advice[] }) {
 }
 
 function AllGood({ advice }: { advice: Advice[] }) {
+  const { t } = useT();
   const positive = advice.find((a) => a.tone === "good") ?? advice[0];
   return (
     <div className="relative grid grid-cols-[auto_1fr] items-center gap-x-6 gap-y-2 sm:gap-x-10">
@@ -386,10 +394,10 @@ function AllGood({ advice }: { advice: Advice[] }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-good">
           <CheckCircle2 size={16} />
-          <span className="cap text-good">Всё под контролем</span>
+          <span className="cap text-good">{t("dash.allgood_eyebrow")}</span>
         </div>
         <h3 className="mt-3 font-display text-[clamp(1.6rem,3vw,2.4rem)] font-500 leading-tight tracking-[-0.03em] text-ink">
-          Всё идёт хорошо
+          {t("dash.allgood_title")}
         </h3>
         {positive && (
           <p className="mt-3 max-w-xl text-[14.5px] leading-relaxed text-muted">{positive.body}</p>
@@ -462,6 +470,7 @@ function AnchorCell({ anchor, site }: { anchor: Anchor; site: SiteKey }) {
 /* ============================ INFRASTRUCTURE ============================ */
 
 function SourcesPanel({ sources }: { sources: SourceStatus[] }) {
+  const { t } = useT();
   return (
     <div>
       <SectionLabel className="mb-4">Источники данных</SectionLabel>
@@ -475,7 +484,7 @@ function SourcesPanel({ sources }: { sources: SourceStatus[] }) {
                 <div className="min-w-0">
                   <div className="font-600 text-ink">{ENGINE[s.engine]}</div>
                   <div className="truncate text-[11px] text-faint">
-                    {live ? `${s.queries} запросов · ${s.inTop10} в топ-10` : "нет ответа от источника"}
+                    {live ? `${s.queries} ${t("dash.queries")} · ${s.inTop10} ${t("dash.in_top10")}` : t("dash.no_answer")}
                   </div>
                 </div>
               </div>

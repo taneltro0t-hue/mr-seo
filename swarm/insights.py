@@ -20,14 +20,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-# Ваши ресурсы в Google Search Console (site_key → siteUrl)
 GSC_SITES = {
-    # "mysite": "https://example.com/",
+    "mysite": "https://example.com/",
+    "demo2": "https://example.org/",
+    "demo3": "sc-domain:example.net",
 }
 
-# Точки вашего бизнеса на Я.Картах: ключ → (название, id организации из URL карт)
-MAPS_ORG = {
-    # "mysite": ("Моя компания", "123456789"),
+MAPS_ORG = {  # из carpathy/reputation_tracker.py
+    "mysite_point": ("Демо-бренд · Столица", "000000000"),
+    "mysite_point": ("Демо-бренд · Город", "000000000"),
+    "demo2": ("Демо-бренд · Город", "000000000"),
 }
 
 
@@ -108,7 +110,7 @@ def reviews() -> dict:
         if not isinstance(cur, dict) or "reviews" not in cur:
             continue
         delta = cur["reviews"] - old.get("reviews", cur["reviews"])
-        sprav = None  # id вашей карточки в Я.Бизнесе (yandex.ru/sprav) — добавьте при желании
+        sprav = {"mysite_point": "000000000", "mysite_point": "000000000"}.get(key)
         out.append({
             "key": key, "label": label,
             "rating": cur.get("rating"), "reviews": cur["reviews"], "new_7d": delta,

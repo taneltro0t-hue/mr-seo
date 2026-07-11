@@ -5,6 +5,7 @@ import { HelpCircle, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { SiteKey } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 type Status = "idle" | "thinking" | "streaming" | "done" | "error";
@@ -47,6 +48,7 @@ export function Explain({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [status, setStatus] = useState<Status>("idle");
@@ -82,7 +84,7 @@ export function Explain({
       const res = await fetch("/api/explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site, metric, value: String(value), context: context ?? "" }),
+        body: JSON.stringify({ site, metric, value: String(value), context: context ?? "", lang }),
         signal: ctrl.signal,
       });
       if (!res.body) throw new Error("no body");
@@ -104,7 +106,7 @@ export function Explain({
       fetchedRef.current = false; // разрешить повтор после сбоя
       setStatus("error");
     }
-  }, [site, metric, value, context]);
+  }, [site, metric, value, context, lang]);
 
   const toggle = () => {
     if (open) {
@@ -156,7 +158,7 @@ export function Explain({
         type="button"
         onClick={toggle}
         aria-expanded={open}
-        aria-label={`Объяснить: ${metric}`}
+        aria-label={t("explain.explain_metric", { metric })}
         className={cn(
           "group/ex inline cursor-help appearance-none border-b border-dotted border-transparent bg-transparent p-0 font-[inherit] text-[inherit] leading-[inherit] transition-colors hover:border-white/40",
           open && "border-white/50",
@@ -177,7 +179,7 @@ export function Explain({
                 exit={{ opacity: 0, y: coords.placement === "bottom" ? -6 : 6, scale: 0.98 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
                 role="dialog"
-                aria-label={`Объяснение: ${metric}`}
+                aria-label={t("explain.explanation_of", { metric })}
                 className="glass z-[90] p-4"
                 style={{
                   position: "fixed",
@@ -189,21 +191,21 @@ export function Explain({
               >
                 <div className="mb-2.5 flex items-center gap-2">
                   <Sparkles size={13} className="text-iris" />
-                  <span className="cap text-iris/80">Mr.Seo объясняет</span>
+                  <span className="cap text-iris/80">{t("explain.title")}</span>
                   <span className="mono ml-auto truncate max-w-[120px] text-[10px] text-ghost" title={metric}>
                     {metric}
                   </span>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    aria-label="Закрыть"
+                    aria-label={t("common.close")}
                     className="focus-ring -mr-1 rounded-md p-1 text-faint transition-colors hover:text-ink"
                   >
                     <X size={13} />
                   </button>
                 </div>
 
-                {status === "thinking" && <ThinkingPulse />}
+                {status === "thinking" && <ThinkingPulse label={t("explain.thinking")} />}
                 {(status === "streaming" || status === "done") && (
                   <p className="text-[13px] leading-relaxed text-ink/90">
                     {stripAction(text)}
@@ -215,7 +217,7 @@ export function Explain({
                 {status === "error" && (
                   <div className="flex items-start gap-2 text-[12.5px] leading-relaxed text-faint">
                     <HelpCircle size={14} className="mt-0.5 flex-none text-warn" />
-                    Мозг сейчас недоступен — попробуйте ещё раз чуть позже.
+                    {t("explain.error")}
                   </div>
                 )}
               </motion.div>
@@ -227,7 +229,7 @@ export function Explain({
   );
 }
 
-function ThinkingPulse() {
+function ThinkingPulse({ label }: { label: string }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
@@ -237,7 +239,7 @@ function ThinkingPulse() {
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           style={{ boxShadow: "0 0 10px rgba(139,147,255,0.7)" }}
         />
-        <span className="mono text-[11px] text-faint">думаю над ответом…</span>
+        <span className="mono text-[11px] text-faint">{label}</span>
       </div>
       <div className="skeleton h-3 w-full rounded" />
       <div className="skeleton h-3 w-4/5 rounded" />

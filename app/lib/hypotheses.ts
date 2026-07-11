@@ -29,7 +29,7 @@ const MOCK_HYPOS: Hypothesis[] = [
     id: "h-geo-optimizer-audit",
     commit_date: "2026-06-29",
     site: "mysite+demo2",
-    urls: ["https://example.com"],
+    urls: ["https://example.com", "https://example.org"],
     change: "geo audit + geo schema для двух сайтов, подключить MCP geo-optimizer.",
     expected: "8-категорийный score, schema-гэпы, LLM-extraction 16%→54%.",
     status: "proposed",

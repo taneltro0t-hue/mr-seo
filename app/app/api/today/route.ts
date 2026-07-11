@@ -9,7 +9,7 @@ export const maxDuration = 60;
 const SEO_AGENT_ROOT = process.env.SEO_AGENT_ROOT ?? path.resolve(process.cwd(), "..");
 const PY = path.join(SEO_AGENT_ROOT, "venv", "bin", "python");
 const run = promisify(execFile);
-const SITE_KEY_RE = /^[a-z0-9_-]{2,24}$/; // ключи из sites_config.py
+const SITES = new Set(["mysite", "demo2", "demo3"]);
 
 export async function GET() {
   try {

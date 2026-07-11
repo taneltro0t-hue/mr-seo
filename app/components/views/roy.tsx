@@ -12,6 +12,7 @@ import { KineticNumber } from "@/components/kinetic-number";
 import { PageHead, Panel, SectionLabel, Skeleton } from "@/components/ui";
 import type { AgentNode, AgentStatus, AgentsResponse, SwarmTask, TasksResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 interface AgentLiveMetric {
   id: string;
@@ -25,10 +26,10 @@ interface AgentMetricsResponse {
 }
 
 const STATUS: Record<AgentStatus, { label: string; color: string; tone: string; tint: OrbTint }> = {
-  live: { label: "в работе", color: "#4bd39a", tone: "good", tint: "good" },
-  sleeping: { label: "спит", color: "#9aa5b2", tone: "muted", tint: "neutral" },
-  error: { label: "ошибка", color: "#ff6b6b", tone: "warn", tint: "warn" },
-  scheduled: { label: "по расписанию", color: "#8b93ff", tone: "iris", tint: "neutral" },
+  live: { label: "roy.st_live", color: "#4bd39a", tone: "good", tint: "good" },
+  sleeping: { label: "roy.st_sleeping", color: "#9aa5b2", tone: "muted", tint: "neutral" },
+  error: { label: "roy.st_error", color: "#ff6b6b", tone: "warn", tint: "warn" },
+  scheduled: { label: "roy.st_scheduled", color: "#8b93ff", tone: "iris", tint: "neutral" },
 };
 
 const METRIC_COLOR: Record<AgentLiveMetric["tone"], string> = {
@@ -45,6 +46,7 @@ function nodePos(i: number, n: number) {
 }
 
 export function RoyView() {
+  const { t, tn } = useT();
   const { tint } = useSite();
   const { data, loading } = useApi<AgentsResponse>("/api/agents");
   const { data: metricsData } = useApi<AgentMetricsResponse>("/api/agents/metrics");
@@ -71,9 +73,9 @@ export function RoyView() {
   return (
     <div className="space-y-10">
       <PageHead
-        eyebrow="Живые агенты продукта"
-        title="Рой"
-        lede="Пять агентов работают на ваше SEO: снимают позиции, объясняют, ищут тактики, проверяют гипотезы и пишут контент. Кликните узел — увидите, что он делает, и запустите вручную."
+        eyebrow={t("roy.eyebrow")}
+        title={t("nav.roy")}
+        lede={t("roy.lede")}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
@@ -103,7 +105,7 @@ export function RoyView() {
             <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center">
               <SeoOrb size={96} tint={centerTint} state={anyError ? "alert" : "idle"} hero interactive />
               <div className="mt-2 font-display text-sm font-600">Mr.Seo</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-faint">оркестратор</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-faint">{t("roy.orchestrator")}</div>
             </div>
 
             {/* nodes */}
@@ -133,10 +135,10 @@ export function RoyView() {
           style={{ background: anyError ? "#ff6b6b" : "#4bd39a" }}
         />
         <span className="mono">
-          Рой: {working} {working === 1 ? "агент работает" : working < 5 ? "агента работают" : "агентов работают"}
+          {t("nav.roy")}: {working} {tn("agent", working)}
         </span>
         <span className="text-faint">·</span>
-        <span className="mono text-faint">{agents.length} узлов в топологии</span>
+        <span className="mono text-faint">{t("roy.nodes_in_topology", { count: agents.length })}</span>
       </div>
 
       {/* Task queue */}
@@ -235,6 +237,7 @@ function AgentNodeDot({
   selected: boolean;
   onClick: () => void;
 }) {
+  const { t } = useT();
   const st = STATUS[agent.status];
   const mColor = metric ? METRIC_COLOR[metric.tone] : st.color;
   return (
@@ -282,7 +285,7 @@ function AgentNodeDot({
           {agent.name}
         </span>
         <span className="text-[9px] leading-tight" style={{ color: mColor }}>
-          {metric ? metric.label : st.label}
+          {metric ? metric.label : t(st.label)}
         </span>
       </span>
     </button>
@@ -290,6 +293,7 @@ function AgentNodeDot({
 }
 
 function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMetric | null }) {
+  const { t } = useT();
   const [msg, setMsg] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const st = STATUS[agent.status];
@@ -304,9 +308,9 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
         body: JSON.stringify({ agent: agent.id }),
       });
       const j = await r.json();
-      setMsg(j.message ?? "Готово.");
+      setMsg(j.message ?? t("roy.done"));
     } catch {
-      setMsg("Не удалось связаться с агентом.");
+      setMsg(t("roy.agent_unreachable"));
     } finally {
       setRunning(false);
     }
@@ -330,7 +334,7 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
           <div>
             <div className="font-display text-xl font-600">{agent.name}</div>
             <div className="text-xs" style={{ color: st.color }}>
-              {st.label}
+              {t(st.label)}
             </div>
           </div>
           {metric && (
@@ -367,19 +371,19 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
         <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl border border-line bg-white/[0.02] p-3.5">
             <div className="flex items-center gap-1.5 text-[11px] text-faint">
-              <Clock size={12} /> Последний запуск
+              <Clock size={12} /> {t("roy.last_run")}
             </div>
-            <div className="mt-1 font-600">{agent.lastRunAgo ?? "нет данных"}</div>
+            <div className="mt-1 font-600">{agent.lastRunAgo ?? t("roy.no_data")}</div>
           </div>
           <div className="rounded-xl border border-line bg-white/[0.02] p-3.5">
-            <div className="text-[11px] text-faint">Расписание</div>
+            <div className="text-[11px] text-faint">{t("roy.schedule")}</div>
             <div className="mt-1 font-600">{agent.schedule}</div>
           </div>
         </div>
 
         {agent.lastResult && (
           <div className="mt-3 rounded-xl border border-line bg-white/[0.02] p-3.5">
-            <div className="mb-1 text-[11px] text-faint">Последний результат</div>
+            <div className="mb-1 text-[11px] text-faint">{t("roy.last_result")}</div>
             <p className="text-[13px] leading-relaxed text-muted">{agent.lastResult}</p>
           </div>
         )}
@@ -391,7 +395,7 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
               disabled={running}
               className="focus-ring flex w-full items-center justify-center gap-2 rounded-xl bg-iris py-3 font-600 text-base-2 transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              <Play size={16} /> {running ? "Запускаю…" : "Запустить сейчас"}
+              <Play size={16} /> {running ? t("roy.running") : t("roy.run_now")}
             </button>
           ) : (
             <button
@@ -399,7 +403,7 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
               disabled={running}
               className="focus-ring flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-white/[0.03] py-3 font-600 text-muted transition-colors hover:text-ink"
             >
-              <Sparkles size={15} /> Как запускается
+              <Sparkles size={15} /> {t("roy.how_it_runs")}
             </button>
           )}
           <AnimatePresence>
@@ -423,6 +427,7 @@ function AgentDetail({ agent, metric }: { agent: AgentNode; metric: AgentLiveMet
 /* ------------------------------ Task queue ------------------------------ */
 
 function TaskQueue() {
+  const { t } = useT();
   const { data, loading } = useApi<TasksResponse>("/api/tasks");
   const [tasks, setTasks] = useState<SwarmTask[] | null>(null);
   const [text, setText] = useState("");
@@ -457,23 +462,22 @@ function TaskQueue() {
       <div className="surface-line p-8">
         <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
           <div>
-            <SectionLabel className="mb-3">Дать задачу рою</SectionLabel>
+            <SectionLabel className="mb-3">{t("roy.give_task")}</SectionLabel>
             <p className="mb-4 text-sm text-muted">
-              Опишите, что нужно сделать по SEO. Задача уходит в очередь роя — исполнитель разберёт её
-              следующим прогоном.
+              {t("roy.task_desc")}
             </p>
             <div className="rounded-2xl border border-line bg-white/[0.02] p-3 focus-within:border-iris/40">
               <textarea
                 name="roy-task"
                 autoComplete="off"
-                aria-label="Задача для роя"
+                aria-label={t("roy.task_aria")}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
                 }}
                 rows={3}
-                placeholder="Напр.: собрать 20 запросов для блога low-light про сведение вокала"
+                placeholder={t("roy.task_placeholder")}
                 className="w-full resize-none bg-transparent px-2 py-1 text-sm text-ink placeholder:text-faint focus:outline-none"
               />
               <div className="flex items-center justify-between px-2 pt-1">
@@ -483,36 +487,36 @@ function TaskQueue() {
                   disabled={!text.trim() || sending}
                   className="focus-ring flex items-center gap-1.5 rounded-lg bg-iris px-3.5 py-2 text-sm font-600 text-base-2 transition-opacity disabled:opacity-40"
                 >
-                  <Send size={14} /> В очередь
+                  <Send size={14} /> {t("roy.enqueue")}
                 </button>
               </div>
             </div>
           </div>
 
           <div>
-            <SectionLabel className="mb-3">Принятые задачи</SectionLabel>
+            <SectionLabel className="mb-3">{t("roy.accepted_tasks")}</SectionLabel>
             <div className="max-h-[260px] space-y-2.5 overflow-y-auto pr-1">
               {loading && !tasks ? (
                 <Skeleton className="h-16" />
               ) : list.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-sm text-faint">
-                  Пока пусто. Первая задача появится здесь.
+                  {t("roy.empty")}
                 </div>
               ) : (
-                list.map((t) => (
+                list.map((task) => (
                   <motion.div
-                    key={t.id}
+                    key={task.id}
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="flex items-start gap-3 rounded-xl border border-line bg-white/[0.02] px-4 py-3"
                   >
                     <span className="mt-1.5 h-2 w-2 flex-none rounded-full bg-ok" />
                     <div className="min-w-0">
-                      <p className="text-sm leading-snug text-ink/90">{t.text}</p>
+                      <p className="text-sm leading-snug text-ink/90">{task.text}</p>
                       <div className="mono mt-1 flex items-center gap-2 text-[10px] text-faint">
-                        <span>{t.created.replace("T", " ")}</span>
+                        <span>{task.created.replace("T", " ")}</span>
                         <span className="rounded border border-ok/25 bg-ok/10 px-1.5 text-ok">
-                          в очереди
+                          {t("common.queued")}
                         </span>
                       </div>
                     </div>

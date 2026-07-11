@@ -2,6 +2,7 @@
 
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { useApi } from "@/components/use-api";
+import { useT } from "@/lib/i18n";
 import { FadeIn, PageHead, Skeleton } from "@/components/ui";
 import type { RunSummary, RunsResponse, Tone } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -13,15 +14,16 @@ const TONE_BAR: Record<Tone, string> = {
 };
 
 export function RunsView() {
+  const { t } = useT();
   const { data, loading } = useApi<RunsResponse>("/api/runs");
   if (loading || !data) return <RunsSkeleton />;
 
   return (
     <div className="space-y-12">
       <PageHead
-        eyebrow="Рой · дневник"
-        title="Сводки аналитика"
-        lede="Ежедневный разбор: что изменилось, где шум окна, а где реальный тренд, и что делать."
+        eyebrow={t("runs.eyebrow")}
+        title={t("runs.title")}
+        lede={t("runs.lede")}
         right={
           data.mock ? (
             <span className="cap rounded-full border border-ok/25 bg-ok/10 px-2.5 py-1 text-ok">демо</span>

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownRight, ArrowUpRight, Check, Copy, Minus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Tone, Trend } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 export function Panel({
   className,
@@ -266,13 +267,14 @@ export function Skeleton({ className }: { className?: string }) {
 /** Кнопка «скопировать» с состоянием подтверждения. */
 export function CopyButton({
   value,
-  label = "Скопировать",
+  label,
   className,
 }: {
   value: string;
   label?: string;
   className?: string;
 }) {
+  const { t } = useT();
   const [done, setDone] = useState(false);
   return (
     <button
@@ -293,7 +295,7 @@ export function CopyButton({
       )}
     >
       {done ? <Check size={13} /> : <Copy size={13} />}
-      {done ? "Скопировано" : label}
+      {done ? t("common.copied") : (label ?? t("common.copy"))}
     </button>
   );
 }
@@ -312,6 +314,7 @@ export function Modal({
   labelledBy?: string;
   maxWidth?: number;
 }) {
+  const { t } = useT();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -355,7 +358,7 @@ export function Modal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Закрыть"
+              aria-label={t("common.close")}
               className="focus-ring absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-faint transition-colors hover:bg-white/[0.06] hover:text-ink"
             >
               <X size={15} />

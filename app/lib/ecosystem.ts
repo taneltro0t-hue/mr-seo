@@ -37,14 +37,27 @@ interface SiteCabinet {
 }
 
 const CABINETS: Record<SiteKey, SiteCabinet> = {
-  // Заполните под свои сайты: host_id формата https:домен:443, GSC-ресурс, id карточек Я.Бизнеса, счётчик Метрики.
   mysite: {
     yandexHostId: "https:example.com:443",
     gscResource: "sc-domain:example.com",
-    business: [],
-    metrikaId: "",
+    metrikaCounter: "108452479",
+    spravIds: [
+      { id: "000000000", label: "Столица" },
+      { id: "000000000", label: "Город" },
+    ],
   },
-
+  demo2: {
+    yandexHostId: "https:example.org:443",
+    gscResource: "sc-domain:example.org",
+    metrikaCounter: "107717978",
+    spravIds: [],
+  },
+  demo3: {
+    yandexHostId: "https:example.net:443",
+    gscResource: "sc-domain:example.net",
+    metrikaCounter: "110047189",
+    spravIds: [],
+  },
 };
 
 /** Собрать все группы deep-links для сайта. */

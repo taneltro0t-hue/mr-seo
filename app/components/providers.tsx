@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { SiteKey } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 import { AppShell } from "@/components/app-shell";
 
 /* ----------------------------- Site context ----------------------------- */
@@ -50,6 +51,7 @@ export function useChat() {
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const { t, lang } = useT();
   const [site, setSiteState] = useState<SiteKey>("mysite");
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -58,6 +60,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [tint, setTint] = useState<SiteTint>("neutral");
   const siteRef = useRef(site);
   siteRef.current = site;
+  const langRef = useRef(lang);
+  langRef.current = lang;
 
   // restore site
   useEffect(() => {
@@ -83,7 +87,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: trimmed, site: siteRef.current }),
+          body: JSON.stringify({ message: trimmed, site: siteRef.current, lang: langRef.current }),
         });
         if (!res.body) throw new Error("no body");
         const reader = res.body.getReader();
@@ -105,7 +109,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         setMessages((m) =>
           m.map((msg) =>
             msg.id === botMsg.id
-              ? { ...msg, content: "Не удалось получить ответ. Мозг Mr.Seo ещё подключается." }
+              ? { ...msg, content: t("chat.fetch_failed") }
               : msg
           )
         );
@@ -114,7 +118,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         setOrbState("idle");
       }
     })();
-  }, [streaming]);
+  }, [streaming, t]);
 
   const siteValue = useMemo(() => ({ site, setSite, tint, setTint }), [site, setSite, tint]);
   const chatValue = useMemo(

@@ -18,29 +18,36 @@ const SEO_AGENT_ROOT =
   process.env.SEO_AGENT_ROOT ?? path.resolve(process.cwd(), "..");
 
 const SITE_LABEL: Record<string, string> = {
-  // mysite: "example.com (описание бизнеса для контекста ассистента)",
+  mysite: "example.com (студия звукозаписи, Столица + Город)",
+  demo2: "example.org (клуб, Город)",
+  demo3: "РЦ Основа (реабилитационный центр, Город-2)",
 };
 
 export async function POST(req: NextRequest) {
   let message = "";
   let site = "mysite";
+  let lang = "ru";
   try {
     const body = await req.json();
     message = String(body?.message ?? "").slice(0, 2000);
     site = String(body?.site ?? "mysite");
+    lang = body?.lang === "en" ? "en" : "ru";
   } catch {
     /* ignore */
   }
 
   if (!message.trim()) {
     return new Response(
-      "Привет. Я Mr.Seo — вижу свежие данные ваших сайтов. Спросите, например: «почему Москва не растёт?» или «что сделать на этой неделе?».",
+      lang === "en"
+        ? "Hi. I'm Mr.Seo — I watch your sites' live data. Ask me, for example: “why isn't Moscow growing?” or “what should I do this week?”."
+        : "Привет. Я Mr.Seo — вижу свежие данные ваших сайтов. Спросите, например: «почему Столица не растёт?» или «что сделать на этой неделе?».",
       { headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
 
-  // вопрос префиксуем выбранным сайтом — дайджест общий, фокус задаёт префикс
-  const question = `[Пользователь смотрит сайт: ${SITE_LABEL[site] ?? site}]\n${message}`;
+  // язык ответа + выбранный сайт задаём префиксом; дайджест общий
+  const langLine = lang === "en" ? "Отвечай на английском языке." : "Отвечай на русском языке.";
+  const question = `${langLine}\n[Пользователь смотрит сайт: ${SITE_LABEL[site] ?? site}]\n${message}`;
 
   const py = path.join(SEO_AGENT_ROOT, "venv", "bin", "python");
   const script = path.join(SEO_AGENT_ROOT, "swarm", "assistant.py");
@@ -80,8 +87,12 @@ export async function POST(req: NextRequest) {
           controller.enqueue(
             enc.encode(
               code === 0
-                ? "Не получил ответа от мозга — попробуйте ещё раз."
-                : `Мозг временно недоступен (${errBuf.slice(0, 160) || "код " + code}). Данные на дашборде живые — сводка и советы там.`,
+                ? lang === "en"
+                  ? "No answer from the brain — please try again."
+                  : "Не получил ответа от мозга — попробуйте ещё раз."
+                : lang === "en"
+                  ? `The brain is temporarily unavailable (${errBuf.slice(0, 160) || "code " + code}). Dashboard data is live — the summary and advice are there.`
+                  : `Мозг временно недоступен (${errBuf.slice(0, 160) || "код " + code}). Данные на дашборде живые — сводка и советы там.`,
             ),
           );
         }
@@ -89,7 +100,13 @@ export async function POST(req: NextRequest) {
       });
       child.on("error", (e) => {
         clearTimeout(timer);
-        controller.enqueue(enc.encode(`Мозг недоступен: ${String(e).slice(0, 160)}`));
+        controller.enqueue(
+          enc.encode(
+            lang === "en"
+              ? `The brain is unavailable: ${String(e).slice(0, 160)}`
+              : `Мозг недоступен: ${String(e).slice(0, 160)}`,
+          ),
+        );
         controller.close();
       });
     },

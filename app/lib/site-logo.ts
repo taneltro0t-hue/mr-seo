@@ -20,9 +20,9 @@ export interface LogoAsset {
 }
 
 // Хост для fetch логотипа. SITES[site].domain у demo3 — витринный
-// override хоста логотипа, если домен в sites.ts отличается от реального
-const LOGO_HOST: Record<string, string> = {
-  // mysite: "example.com",
+// demo3-stavropol.ru (сейчас не отвечает), реальный хост — punycode основа26.рф.
+const LOGO_HOST: Partial<Record<SiteKey, string>> = {
+  demo3: "example.net",
 };
 
 const CACHE_DIR = path.join(process.cwd(), ".cache", "logos");

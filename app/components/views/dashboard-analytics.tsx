@@ -9,15 +9,17 @@ import { SectionIntro, SectionLabel, Skeleton, Stagger, StaggerItem } from "@/co
 import { QueryPageCard } from "@/components/views/dashboard-insights";
 import type { Analytics, SiteKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
-const CITY_LABEL: Record<string, string> = { msk: "Москва", vlg: "Город", spb: "СПб" };
+const CITY_LABEL: Record<string, string> = { msk: "MSK", vlg: "VLG", spb: "SPB" };
 
 export function DashboardAnalytics({ site, index = 3 }: { site: SiteKey; index?: number }) {
+  const { t } = useT();
   const { data, loading } = useApi<Analytics>(`/api/analytics?site=${site}`);
 
   return (
     <section>
-      <SectionIntro index={index} eyebrow="Глубокая аналитика" title="Что под капотом" />
+      <SectionIntro index={index} eyebrow={t("analytics.eyebrow")} title={t("analytics.title")} />
 
       {loading || !data ? (
         <AnalyticsSkeleton />
@@ -38,19 +40,20 @@ export function DashboardAnalytics({ site, index = 3 }: { site: SiteKey; index?:
 /* --------------------------- Нейросети про вас --------------------------- */
 
 function NeuroCard({ data }: { data: Analytics }) {
+  const { t } = useT();
   const ai = data.ai;
   return (
     <div className="glass p-7">
       <div className="mb-5 flex items-center gap-2.5">
         <Bot size={18} className="text-cyan" />
-        <SectionLabel>Нейросети про вас</SectionLabel>
+        <SectionLabel>{t("analytics.llm_title")}</SectionLabel>
         {ai?.week && <span className="mono ml-auto text-[11px] text-faint">{ai.week}</span>}
       </div>
 
       {!ai ? (
         <EmptyState
-          title="Замер ещё не проводился"
-          body="LLM-видимость снимается по понедельникам. Как только пройдёт ближайший прогон — здесь появится, где нейросети называют ваш бренд."
+          title={t("analytics.llm_empty_t")}
+          body={t("analytics.llm_empty_b")}
         />
       ) : (
         <div className="grid gap-7 lg:grid-cols-[220px_1fr]">
@@ -63,7 +66,7 @@ function NeuroCard({ data }: { data: Analytics }) {
               <span className="mb-1 font-display text-3xl font-500 text-faint">/{ai.total}</span>
             </div>
             <div className="mt-3 max-w-[180px] text-center text-xs leading-relaxed text-muted">
-              упоминаний бренда в ответах нейросетей
+              {t("analytics.llm_sub")}
             </div>
           </div>
 
@@ -99,7 +102,7 @@ function NeuroCard({ data }: { data: Analytics }) {
             {ai.competitors.length > 0 && (
               <div>
                 <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-faint">
-                  Кого цитируют вместо / рядом
+                  {t("analytics.llm_rivals")}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {ai.competitors.map((c) => (
@@ -124,16 +127,17 @@ function NeuroCard({ data }: { data: Analytics }) {
 /* ------------------------ Точные метрики Яндекса ------------------------ */
 
 function YandexCard({ data }: { data: Analytics }) {
+  const { t } = useT();
   return (
     <div className="surface-line flex h-full flex-col p-7">
       <div className="mb-5 flex items-center gap-2.5">
         <Gauge size={18} className="text-iris" />
-        <SectionLabel>Точные метрики Яндекса</SectionLabel>
+        <SectionLabel>{t("analytics.qa_title")}</SectionLabel>
       </div>
       {data.yandex.length === 0 ? (
         <EmptyState
-          title="Детальная выгрузка ещё не собрана"
-          body="Как только Яндекс.Вебмастер отдаст статистику запросов, здесь появятся позиции, CTR и спрос по каждому запросу."
+          title={t("analytics.qa_empty_t")}
+          body={t("analytics.qa_empty_b")}
         />
       ) : (
         <Stagger className="space-y-2.5" step={0.05}>
@@ -145,7 +149,7 @@ function YandexCard({ data }: { data: Analytics }) {
                     {r.q}
                   </div>
                   <div className="mono mt-0.5 text-[10px] text-faint">
-                    {r.url} · спрос {r.demand} · CTR {r.ctr.toFixed(1)}%
+                    {r.url} · {t("analytics.demand")} {r.demand} · CTR {r.ctr.toFixed(1)}%
                   </div>
                 </div>
                 <div className="h-8 w-16 flex-none">
@@ -155,7 +159,7 @@ function YandexCard({ data }: { data: Analytics }) {
                   <div className="mono text-base font-600 leading-none text-ink">
                     {r.position > 0 ? r.position.toFixed(1) : "—"}
                   </div>
-                  <div className="text-[9px] text-faint">поз.</div>
+                  <div className="text-[9px] text-faint">{t("common.pos_short")}</div>
                 </div>
               </div>
             </StaggerItem>
@@ -169,24 +173,24 @@ function YandexCard({ data }: { data: Analytics }) {
 /* --------------------- Независимая проверка (SERP) --------------------- */
 
 function SerpCard({ data }: { data: Analytics }) {
+  const { t } = useT();
   const serp = data.serp;
   return (
     <div className="surface-line flex h-full flex-col p-7">
       <div className="mb-5 flex items-center gap-2.5">
         <ShieldCheck size={18} className="text-good" />
-        <SectionLabel>Независимая проверка</SectionLabel>
+        <SectionLabel>{t("analytics.serp_title")}</SectionLabel>
         {serp?.date && <span className="mono ml-auto text-[11px] text-faint">{serp.date}</span>}
       </div>
       {!serp ? (
         <EmptyState
-          title="Контрольный замер ещё не делали"
-          body="Раз в несколько дней рой проверяет выдачу через сторонний движок — без нашего доступа к аналитике. Результат появится здесь."
+          title={t("analytics.serp_empty_t")}
+          body={t("analytics.serp_empty_b")}
         />
       ) : (
         <>
           <p className="mb-4 text-[11px] leading-relaxed text-faint">
-            Позиции глазами постороннего ({serp.engine}) — независимо от того, что
-            показывает наш Вебмастер.
+            {t("analytics.serp_sub", { engine: serp.engine })}
           </p>
           <Stagger className="space-y-2.5" step={0.05}>
             {serp.rows.map((r) => {
@@ -200,7 +204,7 @@ function SerpCard({ data }: { data: Analytics }) {
                       </div>
                       {r.top5[0] && (
                         <div className="mono mt-0.5 truncate text-[10px] text-faint">
-                          топ выдачи: {r.top5[0]}
+                          {t("analytics.serp_top")}: {r.top5[0]}
                         </div>
                       )}
                     </div>
@@ -212,7 +216,7 @@ function SerpCard({ data }: { data: Analytics }) {
                           : "border-line bg-white/[0.02] text-faint"
                       )}
                     >
-                      {inTop ? `#${r.pos}` : "вне топ-30"}
+                      {inTop ? `#${r.pos}` : t("analytics.out30")}
                     </span>
                   </div>
                 </StaggerItem>

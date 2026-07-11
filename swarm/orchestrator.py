@@ -35,10 +35,17 @@ CLAUDE_BIN = os.path.expanduser("~/.npm-global/bin/claude")
 MODEL = "sonnet"  # дешевле к лимитам Max, для сводки хватает
 TIMEOUT = 480
 
-SITES = []  # заполните: ключи ваших сайтов из sites_config.py
+SITES = ["mysite", "demo2", "demo3"]
 # Якорные ВЧ — единственный надёжный сигнал позиции (не шум окна)
 ANCHORS = [
-    # ("mysite", "ваш главный запрос", "yandex"),
+    ("mysite", "студия звукозаписи город", "yandex"),
+    ("mysite", "студия звукозаписи город", "google"),
+    ("mysite", "сведение и мастеринг столица", "yandex"),
+    ("mysite", "заказать съемку клипа в столица", "yandex"),
+    ("demo2", "пример запроса", "yandex"),
+    ("demo2", "пример запроса", "google"),
+    ("demo3", "кодировка минеральные воды", "yandex"),
+    ("demo3", "реабилитационный центр город-2", "yandex"),
 ]
 
 

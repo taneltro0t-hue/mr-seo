@@ -3,6 +3,7 @@
 import { ArrowRight, Minus, Printer, Star, TrendingDown, TrendingUp } from "lucide-react";
 import { useSite } from "@/components/providers";
 import { useApi } from "@/components/use-api";
+import { useT } from "@/lib/i18n";
 import { SeoOrb } from "@/components/seo-orb";
 import { IndexTag, SectionLabel } from "@/components/ui";
 import { REPUTATION_MAP, SITES } from "@/lib/sites";
@@ -12,6 +13,7 @@ import { cn, splitQueryTag } from "@/lib/utils";
 const fmt = (n: number) => n.toFixed(1).replace(/\.0$/, "");
 
 export function ReportView() {
+  const { t } = useT();
   const { site } = useSite();
   const { data, loading, error } = useApi<ReportResponse>(`/api/report?site=${site}&days=30`);
   const meta = SITES[site];
@@ -25,14 +27,14 @@ export function ReportView() {
       <div className="no-print mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
           <IndexTag n="R" />
-          <SectionLabel>Отчёт для клиента · печатный вид</SectionLabel>
+          <SectionLabel>{t("report.eyebrow")}</SectionLabel>
         </div>
         <button
           type="button"
           onClick={() => window.print()}
           className="focus-ring inline-flex items-center gap-2 rounded-lg border border-line bg-white/[0.03] px-4 py-2.5 text-[13px] font-600 text-ink transition-colors hover:border-iris/45 hover:bg-iris/10 hover:text-iris"
         >
-          <Printer size={15} /> Печать / PDF
+          <Printer size={15} /> {t("report.print")}
         </button>
       </div>
 
@@ -44,7 +46,7 @@ export function ReportView() {
         <ReputationBlock data={data} site={site} />
         <WorksBlock data={data} />
         <footer className="mt-12 flex items-center justify-between border-t border-line pt-5">
-          <span className="cap text-faint">Mr.Seo · автоматический SEO-отчёт</span>
+          <span className="cap text-faint">{t("report.footer_auto")}</span>
           <span className="mono text-[11px] text-faint">{meta.domain}</span>
         </footer>
       </article>
@@ -55,6 +57,7 @@ export function ReportView() {
 /* -------------------------------- Шапка -------------------------------- */
 
 function ReportHead({ data, label, domain }: { data: ReportResponse; label: string; domain: string }) {
+  const { t } = useT();
   const positive = data.verdict.match(/раст|улучш|двиг|рост|вырос/i) != null;
   const negative = data.verdict.match(/паден|проседа|упал|снизил|хуже/i) != null;
   const vColor = positive ? "#4bd39a" : negative ? "#ff6b6b" : "#8b93ff";
@@ -62,14 +65,14 @@ function ReportHead({ data, label, domain }: { data: ReportResponse; label: stri
     <header className="border-b border-line pb-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="cap">Отчёт о продвижении · {data.period_days} дней</div>
+          <div className="cap">{t("report.head_days", { days: data.period_days })}</div>
           <h1 className="mt-3 font-display text-[clamp(2rem,4vw,3rem)] font-500 leading-[0.98] tracking-[-0.035em] text-ink">
             {label}
           </h1>
           <div className="mono mt-2 text-[12px] text-faint">{domain}</div>
         </div>
         <div className="text-right">
-          <div className="cap">Сформирован</div>
+          <div className="cap">{t("report.generated")}</div>
           <div className="mono mt-2 text-[13px] font-600 text-muted">{data.generated}</div>
         </div>
       </div>
@@ -81,7 +84,7 @@ function ReportHead({ data, label, domain }: { data: ReportResponse; label: stri
       >
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full" style={{ background: vColor }} />
-          <span className="cap" style={{ color: vColor }}>Вердикт</span>
+          <span className="cap" style={{ color: vColor }}>{t("report.verdict")}</span>
         </div>
         <p className="mt-3 font-display text-[clamp(1.3rem,2.6vw,1.9rem)] font-500 leading-tight tracking-[-0.02em] text-ink">
           {data.verdict}
@@ -94,6 +97,7 @@ function ReportHead({ data, label, domain }: { data: ReportResponse; label: stri
 /* ------------------------------ Витальные показатели ------------------------------ */
 
 function VitalsRow({ data }: { data: ReportResponse }) {
+  const { t } = useT();
   const yandex = data.clicks?.now?.yandex;
   const google = data.clicks?.now?.google;
   const sqi = data.sqi;
@@ -101,23 +105,23 @@ function VitalsRow({ data }: { data: ReportResponse }) {
   return (
     <section className="mt-10 grid gap-4 sm:grid-cols-3">
       <Vital
-        label="Индекс качества (ИКС)"
+        label={t("report.vital_sqi")}
         value={sqi?.current != null ? String(sqi.current) : "—"}
         delta={sqi?.delta ?? null}
         deltaSuffix=""
-        hint="Оценка сайта Яндексом"
+        hint={t("report.vital_sqi_hint")}
       />
       <Vital
-        label="Клики из Яндекса · 7д"
+        label={t("report.vital_yandex")}
         value={yandex ? String(yandex.клики7д) : "—"}
-        sub={yandex ? `${yandex.топ10} запросов в топ-10` : undefined}
-        hint="Переходы из поиска"
+        sub={yandex ? t("report.in_top10", { n: yandex.топ10 }) : undefined}
+        hint={t("report.vital_clicks_hint")}
       />
       <Vital
-        label="Клики из Google · 7д"
+        label={t("report.vital_google")}
         value={google ? String(google.клики7д) : "—"}
-        sub={google ? `${google.топ10} запросов в топ-10` : undefined}
-        hint="Переходы из поиска"
+        sub={google ? t("report.in_top10", { n: google.топ10 }) : undefined}
+        hint={t("report.vital_clicks_hint")}
       />
     </section>
   );
@@ -162,10 +166,11 @@ function Vital({
 /* -------------------------------- Якоря -------------------------------- */
 
 function AnchorsBlock({ data }: { data: ReportResponse }) {
+  const { t } = useT();
   if (!data.anchors?.length) return null;
   return (
     <section className="mt-12">
-      <SectionLabel className="mb-4">Ключевые запросы · было → стало</SectionLabel>
+      <SectionLabel className="mb-4">{t("report.anchors_title")}</SectionLabel>
       <div className="overflow-hidden rounded-2xl border border-line">
         {data.anchors.map((a, i) => {
           const { query, engine } = splitQueryTag(a.query);
@@ -184,7 +189,7 @@ function AnchorsBlock({ data }: { data: ReportResponse }) {
                 <div className="truncate text-[15px] font-600 text-ink" title={query}>{query}</div>
                 {engine && (
                   <div className="cap mt-1" style={{ color: engine === "yandex" ? "#ff6b6b" : "#8b93ff" }}>
-                    {engine === "yandex" ? "Яндекс" : "Google"}
+                    {engine === "yandex" ? t("report.eng_yandex") : "Google"}
                   </div>
                 )}
               </div>
@@ -201,7 +206,7 @@ function AnchorsBlock({ data }: { data: ReportResponse }) {
           );
         })}
       </div>
-      <p className="mono mt-2 text-[10.5px] text-faint">Позиция — место в поиске. Меньше — лучше (1 = первое место).</p>
+      <p className="mono mt-2 text-[10.5px] text-faint">{t("report.pos_hint")}</p>
     </section>
   );
 }
@@ -209,12 +214,13 @@ function AnchorsBlock({ data }: { data: ReportResponse }) {
 /* ------------------------------ Репутация ------------------------------ */
 
 function ReputationBlock({ data, site }: { data: ReportResponse; site: keyof typeof SITES }) {
+  const { t, tn } = useT();
   const entries = Object.entries(data.reputation ?? {});
   if (entries.length === 0) return null;
   const labelMap = new Map((REPUTATION_MAP[site] ?? []).map((r) => [r.key, r.label]));
   return (
     <section className="mt-12">
-      <SectionLabel className="mb-4">Репутация · Яндекс.Карты</SectionLabel>
+      <SectionLabel className="mb-4">{t("report.rep_title")}</SectionLabel>
       <div className="grid gap-4 sm:grid-cols-2">
         {entries.map(([key, p]) => (
           <div key={key} className="surface-line flex items-center justify-between gap-4 p-5">
@@ -227,8 +233,8 @@ function ReputationBlock({ data, site }: { data: ReportResponse; site: keyof typ
             </div>
             <div className="text-right">
               <div className="mono tabular text-[15px] font-600 text-ink">{p.reviews}</div>
-              <div className="cap mt-1">отзывов</div>
-              {p.new > 0 && <div className="mono mt-1.5 text-[11px] font-600 text-good">+{p.new} новых</div>}
+              <div className="cap mt-1">{tn("review", p.reviews)}</div>
+              {p.new > 0 && <div className="mono mt-1.5 text-[11px] font-600 text-good">+{p.new} {tn("new", p.new)}</div>}
             </div>
           </div>
         ))}
@@ -247,12 +253,13 @@ const WORK_TONE: Record<string, string> = {
 };
 
 function WorksBlock({ data }: { data: ReportResponse }) {
+  const { t } = useT();
   if (!data.works?.length) return null;
   return (
     <section className="mt-12">
       <div className="mb-4 flex items-baseline gap-3">
-        <SectionLabel>Что сделано за период</SectionLabel>
-        <span className="mono text-[11px] text-faint">всего {data.works_total}</span>
+        <SectionLabel>{t("report.works_title")}</SectionLabel>
+        <span className="mono text-[11px] text-faint">{t("report.works_total", { n: data.works_total })}</span>
       </div>
       <div className="flex flex-col">
         {data.works.map((w, i) => (
@@ -273,7 +280,7 @@ function WorksBlock({ data }: { data: ReportResponse }) {
       </div>
       {data.works_total > data.works.length && (
         <p className="mono mt-3 text-[11px] text-faint">
-          …и ещё {data.works_total - data.works.length} — показаны последние {data.works.length}.
+          {t("report.works_more", { more: data.works_total - data.works.length, shown: data.works.length })}
         </p>
       )}
     </section>
@@ -283,13 +290,14 @@ function WorksBlock({ data }: { data: ReportResponse }) {
 /* ------------------------------ Состояния ------------------------------ */
 
 function ReportLoading({ label }: { label: string }) {
+  const { t } = useT();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
       <SeoOrb size={96} state="thinking" tint="neutral" hero interactive />
       <div>
-        <div className="font-display text-xl font-500 text-ink">Собираю отчёт по «{label}»</div>
+        <div className="font-display text-xl font-500 text-ink">{t("report.loading_title", { label })}</div>
         <p className="mx-auto mt-2.5 max-w-[380px] text-[13.5px] leading-relaxed text-muted">
-          Мозг сводит позиции, клики, репутацию и список работ за 30 дней. Обычно до минуты.
+          {t("report.loading_body")}
         </p>
       </div>
       <div className="flex items-center gap-1.5">
@@ -306,11 +314,12 @@ function ReportLoading({ label }: { label: string }) {
 }
 
 function ReportError() {
+  const { t } = useT();
   return (
     <div className="surface-line mx-auto mt-16 max-w-[520px] px-6 py-12 text-center">
-      <div className="font-display text-lg font-500 text-ink">Не удалось собрать отчёт</div>
+      <div className="font-display text-lg font-500 text-ink">{t("report.error_title")}</div>
       <p className="mx-auto mt-2 max-w-[380px] text-[13px] leading-relaxed text-faint">
-        Мозг не ответил вовремя или данных за период пока недостаточно. Попробуйте обновить страницу чуть позже.
+        {t("report.error_body")}
       </p>
     </div>
   );

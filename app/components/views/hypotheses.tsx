@@ -7,6 +7,7 @@ import { FadeIn, PageHead, Panel, SectionLabel, Skeleton } from "@/components/ui
 import { KineticNumber } from "@/components/kinetic-number";
 import type { Hypothesis, HypoStatus, HypothesesResponse, Lesson, Tone } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const STATUS_TONE: Record<HypoStatus, Tone | "neutral"> = {
   proposed: "neutral",
@@ -25,18 +26,19 @@ const DOT: Record<string, string> = {
 };
 
 export function HypothesesView() {
+  const { t } = useT();
   const { data, loading } = useApi<HypothesesResponse>("/api/hypotheses");
   if (loading || !data) return <HypoSkeleton />;
 
   return (
     <div className="space-y-12">
       <PageHead
-        eyebrow="Лаборатория"
-        title="Гипотезы"
-        lede="Каждое изменение — гипотеза с ожиданием и вердиктом. Проверяем через окно и записываем урок."
+        eyebrow={t("hypo.eyebrow")}
+        title={t("nav.hypotheses")}
+        lede={t("hypo.lede")}
         right={
           data.mock ? (
-            <span className="cap rounded-full border border-ok/25 bg-ok/10 px-2.5 py-1 text-ok">демо</span>
+            <span className="cap rounded-full border border-ok/25 bg-ok/10 px-2.5 py-1 text-ok">{t("hypo.demo")}</span>
           ) : undefined
         }
       />
@@ -44,10 +46,10 @@ export function HypothesesView() {
       {/* stats — HUD strip */}
       <FadeIn delay={0.05}>
         <div className="grid grid-cols-2 divide-line rounded-[var(--radius-xl2)] border border-line sm:grid-cols-4 sm:divide-x">
-          <Stat label="Всего" value={data.stats.total} tone="neutral" />
-          <Stat label="В работе" value={data.stats.active} tone="ok" />
-          <Stat label="Подтверждено" value={data.stats.confirmed} tone="good" />
-          <Stat label="Опровергнуто" value={data.stats.falsified} tone="warn" />
+          <Stat label={t("hypo.stat_total")} value={data.stats.total} tone="neutral" />
+          <Stat label={t("hypo.stat_active")} value={data.stats.active} tone="ok" />
+          <Stat label={t("hypo.stat_confirmed")} value={data.stats.confirmed} tone="good" />
+          <Stat label={t("hypo.stat_falsified")} value={data.stats.falsified} tone="warn" />
         </div>
       </FadeIn>
 
@@ -67,7 +69,7 @@ export function HypothesesView() {
               <div className="space-y-3">
                 {col.items.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-line px-3 py-6 text-center text-xs text-faint">
-                    пусто
+                    {t("hypo.empty")}
                   </div>
                 ) : (
                   col.items.map((h, i) => <HypoCard key={h.id} h={h} delay={i * 0.03} />)

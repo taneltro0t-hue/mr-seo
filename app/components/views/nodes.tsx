@@ -8,6 +8,7 @@ import { SiteLogo } from "@/components/site-logo";
 import { PageHead, Skeleton, Stagger, StaggerItem } from "@/components/ui";
 import type { DataNode, NodeKind, NodesResponse, NodeState } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 const ICONS: Record<NodeKind, LucideIcon> = {
   yandex: Search,
@@ -23,10 +24,11 @@ const STATE_COLOR: Record<NodeState, string> = {
   idle: "#5a6472",
 };
 
+// значения — ключи i18n, резолвятся через t() на рендере
 const STATE_LABEL: Record<NodeState, string> = {
-  live: "На связи",
-  error: "Ошибка",
-  idle: "Не подключён",
+  live: "nodes.state_live",
+  error: "nodes.state_error",
+  idle: "nodes.state_idle",
 };
 
 export function NodesView() {
@@ -79,18 +81,19 @@ export function NodesView() {
 }
 
 function Header({ onConnect }: { onConnect: () => void }) {
+  const { t } = useT();
   return (
     <PageHead
-      eyebrow="Инфраструктура данных"
-      title="Узлы"
-      lede="Откуда рой берёт данные по каждому сайту. Зелёный пульс — источник отвечает, красный — что-то отвалилось и это можно починить."
+      eyebrow={t("nodes.eyebrow")}
+      title={t("nav.nodes")}
+      lede={t("nodes.lede")}
       right={
         <button
           type="button"
           onClick={onConnect}
           className="focus-ring inline-flex items-center gap-2 rounded-xl bg-iris px-4 py-2.5 text-sm font-600 text-white shadow-[0_12px_34px_-14px_rgba(139,147,255,0.95)] transition-all hover:brightness-110"
         >
-          <Plus size={16} /> Подключить сайт
+          <Plus size={16} /> {t("nodes.connect_site")}
         </button>
       }
     />
@@ -98,12 +101,13 @@ function Header({ onConnect }: { onConnect: () => void }) {
 }
 
 function LiveCount({ nodes }: { nodes: DataNode[] }) {
+  const { t, tn } = useT();
   const live = nodes.filter((n) => n.state === "live").length;
   const err = nodes.filter((n) => n.state === "error").length;
   return (
     <span className="mono">
-      {live}/{nodes.length} на связи
-      {err > 0 && <span className="text-warn"> · {err} ошибк{err === 1 ? "а" : "и"}</span>}
+      {live}/{nodes.length} {t("nodes.live_suffix")}
+      {err > 0 && <span className="text-warn"> · {err} {tn("error", err)}</span>}
     </span>
   );
 }
@@ -111,6 +115,7 @@ function LiveCount({ nodes }: { nodes: DataNode[] }) {
 /* ------------------------------ Node card ------------------------------ */
 
 function NodeCard({ node, accent }: { node: DataNode; accent: string }) {
+  const { t } = useT();
   const Icon = ICONS[node.kind];
   const color = STATE_COLOR[node.state];
   const live = node.state === "live";
@@ -166,14 +171,14 @@ function NodeCard({ node, accent }: { node: DataNode; accent: string }) {
               : "border-line bg-white/[0.02] text-faint"
           )}
         >
-          <span className="font-600">Что сделать. </span>
+          <span className="font-600">{t("nodes.what_to_do")} </span>
           {node.fix}
         </div>
       )}
 
       {node.lastDate && (
         <div className="relative mt-auto pt-3 text-[10px] text-faint mono">
-          обновлено {node.lastDate}
+          {t("nodes.updated")} {node.lastDate}
         </div>
       )}
     </div>
@@ -181,6 +186,7 @@ function NodeCard({ node, accent }: { node: DataNode; accent: string }) {
 }
 
 function StateBadge({ state, color }: { state: NodeState; color: string }) {
+  const { t } = useT();
   const live = state === "live";
   return (
     <span
@@ -200,7 +206,7 @@ function StateBadge({ state, color }: { state: NodeState; color: string }) {
         )}
         <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: color }} />
       </span>
-      {STATE_LABEL[state]}
+      {t(STATE_LABEL[state])}
     </span>
   );
 }

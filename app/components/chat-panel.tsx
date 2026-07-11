@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { useChat, useSite } from "@/components/providers";
 import { DispatchButton } from "@/components/views/dashboard-insights";
 import { SeoOrb } from "@/components/seo-orb";
+import { useT } from "@/lib/i18n";
+import type { OrbState } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,17 +30,13 @@ function actionLabel(action: string): string {
   return action.replace(/^\s*\[[^\]]*\]\s*/, "").trim() || action;
 }
 
-const SUGGESTIONS = [
-  "Что сделать на этой неделе?",
-  "Почему просела Москва?",
-  "Как дела у проекта?",
-];
+const SUGGESTION_KEYS = ["chat.sugg_1", "chat.sugg_2", "chat.sugg_3"] as const;
 
-const STATUS_TEXT = {
-  idle: "Готов помочь",
-  thinking: "Думаю…",
-  speaking: "Отвечаю…",
-} as const;
+const STATUS_KEY: Record<OrbState, string> = {
+  idle: "chat.status_idle",
+  thinking: "chat.status_thinking",
+  speaking: "chat.status_speaking",
+};
 
 /**
  * Плавающий компаньон — орб у правого края, вертикально по центру. Едет со
@@ -48,6 +46,7 @@ const STATUS_TEXT = {
 export function ChatLauncher() {
   const { open, setOpen, orbState } = useChat();
   const { tint } = useSite();
+  const { t } = useT();
   return (
     <AnimatePresence>
       {!open && (
@@ -57,7 +56,7 @@ export function ChatLauncher() {
           exit={{ scale: 0, opacity: 0, x: 48 }}
           transition={{ type: "spring", stiffness: 300, damping: 24 }}
           onClick={() => setOpen(true)}
-          aria-label="Спросить Mr.Seo"
+          aria-label={t("chat.ask")}
           className="focus-ring group fixed bottom-16 right-4 z-40 rounded-full sm:bottom-14 sm:right-6"
         >
           {/* мягкий дрейф вверх-вниз — «дыхание» компаньона */}
@@ -68,8 +67,8 @@ export function ChatLauncher() {
           >
             {/* всплывающая подпись слева при наведении */}
             <span className="glass pointer-events-none invisible absolute right-full mr-3 hidden translate-x-1 whitespace-nowrap rounded-full px-4 py-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:translate-x-0 group-hover:opacity-100 sm:block">
-              <span className="block text-[13px] font-600 leading-tight text-ink">Спросить Mr.Seo</span>
-              <span className="block text-[10.5px] text-faint">{STATUS_TEXT[orbState]}</span>
+              <span className="block text-[13px] font-600 leading-tight text-ink">{t("chat.ask")}</span>
+              <span className="block text-[10.5px] text-faint">{t(STATUS_KEY[orbState])}</span>
             </span>
             <SeoOrb size={62} state={orbState} tint={tint} hero interactive />
           </motion.span>
@@ -82,6 +81,7 @@ export function ChatLauncher() {
 export function ChatPanel() {
   const { open, setOpen, messages, send, orbState, streaming } = useChat();
   const { tint } = useSite();
+  const { t } = useT();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -125,13 +125,13 @@ export function ChatPanel() {
                       orbState === "idle" ? "bg-good" : "bg-iris"
                     )}
                   />
-                  {STATUS_TEXT[orbState]}
+                  {t(STATUS_KEY[orbState])}
                 </div>
               </div>
               <button
                 onClick={() => setOpen(false)}
                 className="focus-ring rounded-lg p-2 text-faint hover:bg-white/5 hover:text-ink"
-                aria-label="Закрыть чат"
+                aria-label={t("chat.close_chat")}
               >
                 <X size={18} />
               </button>
@@ -143,21 +143,24 @@ export function ChatPanel() {
                 <div className="flex flex-col items-center gap-5 pt-8 text-center">
                   <SeoOrb size={112} state="idle" tint={tint} interactive />
                   <div>
-                    <div className="font-display text-lg font-600">Привет, я Mr.Seo</div>
+                    <div className="font-display text-lg font-600">{t("chat.greet_title")}</div>
                     <p className="mx-auto mt-2 max-w-[280px] text-sm text-muted">
-                      Слежу за позициями и объясняю простым языком, что происходит и что делать.
+                      {t("chat.greet_body")}
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-center gap-2">
-                    {SUGGESTIONS.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => send(s)}
-                        className="focus-ring rounded-full border border-line bg-white/[0.02] px-3 py-1.5 text-xs text-muted transition-colors hover:border-iris/40 hover:text-ink"
-                      >
-                        {s}
-                      </button>
-                    ))}
+                    {SUGGESTION_KEYS.map((k) => {
+                      const s = t(k);
+                      return (
+                        <button
+                          key={k}
+                          onClick={() => send(s)}
+                          className="focus-ring rounded-full border border-line bg-white/[0.02] px-3 py-1.5 text-xs text-muted transition-colors hover:border-iris/40 hover:text-ink"
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -194,7 +197,7 @@ export function ChatPanel() {
                 <textarea
                   name="mrseo-chat"
                   autoComplete="off"
-                  aria-label="Сообщение для Mr.Seo"
+                  aria-label={t("chat.input_aria")}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -204,20 +207,20 @@ export function ChatPanel() {
                     }
                   }}
                   rows={1}
-                  placeholder="Спросите про своё SEO…"
+                  placeholder={t("chat.placeholder")}
                   className="max-h-32 flex-1 resize-none bg-transparent py-1 text-sm text-ink placeholder:text-faint focus:outline-none"
                 />
                 <button
                   onClick={submit}
                   disabled={!input.trim() || streaming}
                   className="focus-ring flex h-8 w-8 flex-none items-center justify-center rounded-full bg-iris text-base-2 transition-opacity disabled:opacity-30"
-                  aria-label="Отправить"
+                  aria-label={t("common.send")}
                 >
                   <ArrowUp size={17} strokeWidth={2.5} />
                 </button>
               </div>
               <p className="mt-2 px-1 text-[10px] text-faint">
-                Мозг подключается отдельно · сейчас демо-ответы
+                {t("chat.disclaimer")}
               </p>
             </div>
           </motion.aside>
@@ -229,6 +232,7 @@ export function ChatPanel() {
 
 /** Предложенное мозгом действие под ответом — вырезано из строки ACTION. */
 function ChatAction({ action }: { action: string }) {
+  const { t } = useT();
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, filter: "blur(6px)" }}
@@ -238,7 +242,7 @@ function ChatAction({ action }: { action: string }) {
     >
       <div className="mb-2 flex items-center gap-1.5">
         <Sparkles size={13} className="text-iris" />
-        <span className="cap text-iris/80">Mr.Seo предлагает</span>
+        <span className="cap text-iris/80">{t("chat.suggests")}</span>
       </div>
       <p className="mb-3 text-[13px] leading-snug text-ink/90">{actionLabel(action)}</p>
       <DispatchButton text={action} />

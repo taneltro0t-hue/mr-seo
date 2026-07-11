@@ -20,7 +20,10 @@ sys.path.insert(0, str(ROOT))
 from carpathy.register import REPO_PATHS
 
 ANCHORS = {
-    # "mysite": [("ваш главный запрос", "yandex")],
+    "mysite": [("студия звукозаписи город", "yandex"), ("сведение и мастеринг столица", "yandex"),
+                 ("заказать съемку клипа в столица", "yandex")],
+    "demo2": [("пример запроса", "yandex"), ("пример запроса", "google")],
+    "demo3": [("реабилитационный центр город-2", "yandex"), ("кодировка минеральные воды", "yandex")],
 }
 
 
