@@ -452,6 +452,7 @@ export interface TodayFix {
 }
 
 export interface TodayAction {
+  key?: string; // стабильный ключ карточки (ack/целостность состояний)
   kind: TodayActionKind;
   priority: number; // 1 = высший
   title: string;

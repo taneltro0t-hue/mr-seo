@@ -4,6 +4,21 @@ import fs from "node:fs";
 import path from "node:path";
 import { SEO_ROOT } from "@/lib/fs-data";
 
+const LOCKS = path.join(SEO_ROOT, "swarm/tasks/agent_locks.json");
+
+function readLocks(): Record<string, { at: string }> {
+  try { return JSON.parse(fs.readFileSync(LOCKS, "utf8")); } catch { return {}; }
+}
+function writeLock(agent: string) {
+  const d = readLocks();
+  d[agent] = { at: new Date().toISOString() };
+  try { fs.mkdirSync(path.dirname(LOCKS), { recursive: true }); fs.writeFileSync(LOCKS, JSON.stringify(d)); } catch {}
+}
+
+export function GET() {
+  return NextResponse.json({ locks: readLocks() });
+}
+
 export const dynamic = "force-dynamic";
 
 // Реально запускаемые агенты и их команды.
@@ -52,6 +67,7 @@ export async function POST(req: NextRequest) {
       stdio: "ignore",
     });
     child.unref();
+    writeLock(agent);
     return NextResponse.json({ status: "started", message: RUNNABLE[agent].msg });
   } catch (e) {
     return NextResponse.json({ status: "error", message: String(e) }, { status: 500 });

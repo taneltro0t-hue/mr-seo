@@ -268,6 +268,12 @@ function ActionCard({ action, index }: { action: TodayAction; index: number }) {
             href={action.url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              if (action.key) {
+                fetch("/api/ack", { method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ key: action.key }) }).catch(() => {});
+              }
+            }}
             className="focus-ring inline-flex items-center gap-1.5 rounded-lg bg-ok px-3.5 py-2 text-[12px] font-600 text-base-2 transition-opacity hover:opacity-90"
           >
             <MessageSquareText size={13} /> {t("common.reply")}

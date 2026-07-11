@@ -55,6 +55,24 @@ def night() -> list:
     return done[:12]
 
 
+ACKS = ROOT / "swarm" / "tasks" / "acks.json"
+LOCKS = ROOT / "swarm" / "tasks" / "agent_locks.json"
+
+def _acks() -> dict:
+    try:
+        return json.loads(ACKS.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+def _lock_fresh(agent: str, minutes: int = 20) -> bool:
+    try:
+        d = json.loads(LOCKS.read_text(encoding="utf-8"))
+        at = datetime.fromisoformat(d[agent]["at"])
+        return (NOW - at).total_seconds() < minutes * 60
+    except Exception:
+        return False
+
+
 def actions() -> list:
     todo = []
     # 1) незамерженные ветки моста
@@ -65,7 +83,7 @@ def actions() -> list:
             br = subprocess.run(["git", "-C", repo, "branch", "--list", "mrseo/*"],
                                 capture_output=True, text=True, timeout=10).stdout
             for b in [x.strip().lstrip("* ") for x in br.splitlines() if x.strip()]:
-                todo.append({"kind": "merge", "priority": 1,
+                todo.append({"kind": "merge", "priority": 1, "key": f"merge:{b}",
                              "title": f"Merge ветки {b} ({site}) — правки готовы, билд проверен",
                              "site": site, "branch": b,
                              "hint": f"cd в репо → git merge {b} → push = автодеплой"})
@@ -77,6 +95,7 @@ def actions() -> list:
         for p in reviews().get("points", []):
             if p.get("new_7d", 0) > 0:
                 todo.append({"kind": "review", "priority": 2,
+                             "key": f"review:{p['key']}:{p['reviews']}",
                              "title": f"{p['label']}: +{p['new_7d']} новых отзывов — прочитать и ответить",
                              "url": p["reply_url"]})
     except Exception:
@@ -85,6 +104,7 @@ def actions() -> list:
     for f in glob.glob(str(ROOT / "content_drafts" / "**" / "*.md"), recursive=True):
         if _mtime(f) >= NOW - timedelta(days=7):
             todo.append({"kind": "draft", "priority": 2,
+                         "key": f"draft:{Path(f).name}",
                          "title": f"Черновик ждёт вычитки: {Path(f).stem}",
                          "hint": f"content_drafts/{Path(f).relative_to(ROOT / 'content_drafts')}"})
     # 4) созревшие verify
@@ -92,9 +112,14 @@ def actions() -> list:
         hyps = json.loads((ROOT / "carpathy" / "hypotheses.json").read_text(encoding="utf-8"))["hypotheses"]
         ripe = [h["id"] for h in hyps if h.get("status") in ("pending", "observe") and h.get("verify_due", "9999") <= TODAY]
         if ripe:
-            todo.append({"kind": "verify", "priority": 3,
-                         "title": f"Созрели гипотезы: {', '.join(ripe[:4])} — прогнать verify",
-                         "fix": {"type": "run", "agent": "verify", "label": "Прогнать verify сейчас"}})
+            vkey = "verify:" + ",".join(sorted(ripe))
+            card = {"kind": "verify", "priority": 3, "key": vkey,
+                    "title": f"Созрели гипотезы: {', '.join(ripe[:4])} — прогнать verify"}
+            if _lock_fresh("verify", 60):
+                card["title"] = f"Verify прогнан — вердикты по {', '.join(ripe[:3])} ждут применения"
+            else:
+                card["fix"] = {"type": "run", "agent": "verify", "label": "Прогнать verify сейчас"}
+            todo.append(card)
     except Exception:
         pass
     # 5) заявки new-site и свободные задачи без ✓
@@ -110,16 +135,18 @@ def actions() -> list:
         for a in watchman():
             fix = None
             if "снапшот" in a or "daily_scan" in a:
-                fix = {"type": "run", "agent": "scan", "label": "Запустить скан сейчас"}
+                fix = None if _lock_fresh("scan", 15) else {"type": "run", "agent": "scan", "label": "Запустить скан сейчас"}
             elif "диск" in a:
                 fix = {"type": "task", "label": "Поручить рою разбор диска",
                        "task": f"[fix] {a} — найти что чистить безопасно (кэши, старые логи, node_modules заброшенных проектов), список на подтверждение"}
             else:
                 fix = {"type": "task", "label": "Поручить исправление",
                        "task": f"[fix] {a} — разобраться и предложить решение"}
-            todo.append({"kind": "alert", "priority": 0, "title": f"⚠️ {a}", "fix": fix})
+            todo.append({"kind": "alert", "priority": 0, "key": f"alert:{a[:60]}", "title": f"⚠️ {a}", "fix": fix})
     except Exception:
         pass
+    acks = _acks()
+    todo = [x for x in todo if x.get("key") not in acks]
     todo.sort(key=lambda x: x["priority"])
     return todo[:10]
 
