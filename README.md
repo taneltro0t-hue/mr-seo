@@ -1,6 +1,6 @@
 # Mr.Seo — AI SEO workstation that actually does the work
 
-**v0.1.1-alpha** · Русский ниже ↓ · [Telegram @lowlightcorp](https://t.me/lowlightcorp)
+**v0.1.1-alpha** · Русский ниже ↓ · [Telegram @lowlightconnect](https://t.me/lowlightconnect)
 
 > An open-source SEO command center for **Yandex + Google**: a swarm of AI agents that
 > tracks your positions daily, explains complex data in plain words, finds
@@ -23,7 +23,7 @@ your comments and support. My current goal is to buy a 3D printer in our
 "sanctioned" country 🙂
 
 I'd love to find like-minded people and new friends around the world.
-Telegram: **[@lowlightcorp](https://t.me/lowlightcorp)**
+Telegram: **[@lowlightconnect](https://t.me/lowlightconnect)**
 
 If you'd like to support the project — USDT (TRC20):
 `TWAZuHMjpBwVMJTKACbd4m3B19CYeuyD4R`
@@ -102,7 +102,7 @@ Issues and PRs are very welcome. Free while we polish the machine together.
 
 # 🇷🇺 Mr.Seo — ИИ-станция для SEO, которая работает руками
 
-**v0.1.1-alpha** · [Telegram @lowlightcorp](https://t.me/lowlightcorp)
+**v0.1.1-alpha** · [Telegram @lowlightconnect](https://t.me/lowlightconnect)
 
 > Open-source SEO-центр для **Яндекса и Google**: рой ИИ-агентов ежедневно снимает
 > позиции, объясняет сложные данные простым языком, находит запросы «дожать за один
@@ -123,7 +123,7 @@ Issues and PRs are very welcome. Free while we polish the machine together.
 «санкционной» стране 🙂
 
 Буду рад обрести единомышленников и новых друзей по всему миру.
-Телеграм для связи: **[@lowlightcorp](https://t.me/lowlightcorp)**
+Телеграм для связи: **[@lowlightconnect](https://t.me/lowlightconnect)**
 
 Кто решит поддержать проект — USDT (TRC20):
 `TWAZuHMjpBwVMJTKACbd4m3B19CYeuyD4R`
@@ -193,4 +193,4 @@ cd .. && ./venv/bin/python daily_scan.py
 
 ## License
 
-MIT © Anton (@lowlightcorp)
+MIT © Anton (@lowlightconnect)
