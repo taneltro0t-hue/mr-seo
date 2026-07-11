@@ -1,0 +1,396 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Mr.Seo — FUI / bridge-of-the-ship design system
+   Not a dashboard. A cinematic instrument.
+   ============================================================ */
+
+@theme inline {
+  /* surfaces — true black base (Zoey #000000), elevation only through light */
+  --color-base: #000000;
+  --color-base-2: #030407;
+  --color-panel: #0b0d12;
+  --color-panel-2: #101319;
+  --color-elev: #171b22;
+  --color-line: rgba(255, 255, 255, 0.07);
+  --color-line-strong: rgba(255, 255, 255, 0.14);
+
+  /* text — strict alpha-white scale (.92 / .66 / .42 / .24), one white, no grays */
+  --color-ink: rgba(255, 255, 255, 0.92);
+  --color-muted: rgba(255, 255, 255, 0.66);
+  --color-faint: rgba(255, 255, 255, 0.42);
+  --color-ghost: rgba(255, 255, 255, 0.24);
+
+  /* brand / signal — one accent pair (iris + cyan) + tonal set */
+  --color-iris: #8b93ff;
+  --color-iris-deep: #6a63f5;
+  --color-cyan: #38e8d0;
+  --color-good: #4bd39a;
+  --color-ok: #f4c25a;
+  --color-warn: #ff6b6b;
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-xl2: 22px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Soft edge vignette — frames the scene, keeps the center bright.
+   Below content (z-1) so it never dims the UI's chroma. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  /* едва заметная кайма; центр смещён к середине, низ не давим —
+     там живут аналитика и тексты (фидбек 06.07) */
+  background: radial-gradient(165% 150% at 50% 46%, transparent 82%, rgba(0, 0, 0, 0.14) 100%);
+}
+
+/* Fine film grain — barely-there. soft-light modulates luminance only, so
+   accent colors keep ringing instead of being glazed by a gray sheet. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+  opacity: 0.04;
+}
+
+/* ---------------- Typographic voice ---------------- */
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* System caption — JetBrains Mono, uppercase, wide tracking (Zoey signature) */
+.cap {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--color-faint);
+}
+.cap-tight {
+  letter-spacing: 0.16em;
+}
+
+.text-aurora {
+  background: linear-gradient(100deg, #ffffff 0%, #b8bcff 40%, #6ff0e0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hero display number — huge, negative tracked */
+.hero-num {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.055em;
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- Surface weights (3 tiers, kill sameness) ---------------- */
+
+/* tier 1 — hero: no border, light bleeds from within */
+.surface-hero {
+  position: relative;
+}
+
+/* tier 2 — semi-glass, used sparingly for one elevated moment per view */
+.glass {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.006) 45%),
+    color-mix(in srgb, var(--color-panel) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border-radius: var(--radius-xl2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 30px 80px -44px rgba(0, 0, 0, 0.9);
+}
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.02) 38%,
+    rgba(139, 147, 255, 0.14) 78%,
+    rgba(56, 232, 208, 0.12)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* tier 3 — line only: content floats on black, framed by a single hairline */
+.surface-line {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xl2);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 40%);
+}
+.surface-line:hover {
+  border-color: var(--color-line-strong);
+}
+
+.hairline {
+  border: 1px solid var(--color-line);
+}
+.rule-x {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-line) 12%, var(--color-line) 88%, transparent);
+}
+.rule-y {
+  width: 1px;
+  align-self: stretch;
+  background: linear-gradient(180deg, transparent, var(--color-line) 18%, var(--color-line) 82%, transparent);
+}
+
+/* HUD corner brackets — declassified-blueprint frame */
+.hud-frame::before,
+.hud-frame::after {
+  content: "";
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-line-strong);
+  pointer-events: none;
+}
+.hud-frame::before {
+  left: 10px;
+  top: 10px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.hud-frame::after {
+  right: 10px;
+  bottom: 10px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+  background-clip: content-box;
+}
+
+/* focus ring */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-base), 0 0 0 4px rgba(139, 147, 255, 0.65);
+}
+
+/* ---------- Ambient scene veil ----------
+   The faint grid + its radial fade live on a decorative ::before layer.
+   Putting mask-image on .scene-veil itself masked the ENTIRE content
+   subtree (main + all children), so everything below ~42% of page height
+   composited toward transparent over the black AmbientScene — reading as a
+   "darkening gradient" on the lower sections (фидбек 06.07). Isolating the
+   mask to the pseudo-element keeps the grid vignette without dimming text. */
+.scene-veil {
+  position: relative;
+}
+.scene-veil::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+  background-size: 54px 54px;
+  -webkit-mask-image: radial-gradient(125% 100% at 50% 0%, #000 42%, transparent 100%);
+  mask-image: radial-gradient(125% 100% at 50% 0%, #000 42%, transparent 100%);
+}
+.scene-veil > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate3d(6%, 5%, 0) scale(1.15); opacity: 0.82; }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.1); opacity: 0.36; }
+  50% { transform: translate3d(-7%, -4%, 0) scale(1); opacity: 0.66; }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.32; }
+  50% { transform: translate3d(4%, -6%, 0) scale(1.2); opacity: 0.56; }
+}
+
+/* ---- Orb + motion language ---- */
+@keyframes orb-spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+@keyframes dash-flow { to { stroke-dashoffset: -1000; } }
+
+/* warm-pulse — living-organism status dot */
+@keyframes warm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.warm-pulse { animation: warm-pulse 2.6s ease-in-out infinite; }
+
+/* glow-breathe — ONE breathing glow per screen, 5.5s. Color via --gb. */
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 44px -12px var(--gb, rgba(139, 147, 255, 0.5)); }
+  50% { box-shadow: 0 0 88px -6px var(--gb, rgba(139, 147, 255, 0.5)); }
+}
+.breathe-glow { animation: glow-breathe 5.5s ease-in-out infinite; }
+
+/* marquee for live ticker */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 42s linear infinite;
+}
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.035);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  .marquee-track {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------------- Печать отчёта (язык клиента: белая бумага) ----------------
+   Прячем весь UI, кроме листа отчёта. Внутри .report-sheet переопределяем
+   палитру на «бумажную» — все text-ink/muted/faint/line флипаются автоматически,
+   потому что это var()-токены. Акценты (iris/good/warn) остаются читаемыми. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+  }
+  body::before,
+  body::after {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .report-sheet,
+  .report-sheet * {
+    visibility: visible !important;
+  }
+  .report-sheet {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0 !important;
+    /* var()-токены (границы через `*{border-color:var(--color-line)}`, .cap, .mono) */
+    --color-line: #d9d9de;
+    --color-line-strong: #c2c2c8;
+    --color-faint: #5a5a60;
+    --color-ghost: #8a8a90;
+    color: #0b0b0d !important;
+    background: #ffffff !important;
+  }
+  /* Tailwind-утилиты инлайнят литеральный white (@theme inline) — не читают var,
+     поэтому цвет текста для печати переопределяем адресно. */
+  .report-sheet .text-ink {
+    color: #0b0b0d !important;
+  }
+  .report-sheet .text-muted {
+    color: #2c2c30 !important;
+  }
+  .report-sheet .text-faint,
+  .report-sheet .text-ink\/90,
+  .report-sheet .text-ink\/80 {
+    color: #4a4a50 !important;
+  }
+  .report-sheet .text-ghost {
+    color: #8a8a90 !important;
+  }
+  .report-sheet .surface-line {
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

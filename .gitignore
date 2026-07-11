@@ -1,0 +1,17 @@
+.env
+.env.local
+credentials/
+memory/
+logs/
+swarm/runs/*
+!swarm/runs/.gitkeep
+swarm/tasks/inbox.md
+swarm/assistant_sessions.json
+content_drafts/
+venv/
+node_modules/
+.next/
+.cache/
+__pycache__/
+*.pyc
+.DS_Store
