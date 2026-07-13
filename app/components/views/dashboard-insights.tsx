@@ -17,7 +17,7 @@ import type {
   ReviewsResponse,
   SiteKey,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, taskCore } from "@/lib/utils";
 
 /* Источник запроса — тот же цветовой код, что в якорях (Яндекс красный, Google ирис). */
 const SRC: Record<InsightSrc, { label: string; full: string; color: string }> = {
@@ -165,8 +165,7 @@ export function DispatchButton({
       .then((r) => r.json())
       .then((d: { tasks?: { text: string; status: string }[] }) => {
         if (!alive || !d?.tasks) return;
-        const norm = (x: string) => x.replace(/\s+/g, " ").trim().toLowerCase();
-        if (d.tasks.some((q) => q.status === "queued" && norm(q.text) === norm(text))) {
+        if (d.tasks.some((q) => q.status === "queued" && taskCore(q.text) === taskCore(text))) {
           setState("done");
         }
       })

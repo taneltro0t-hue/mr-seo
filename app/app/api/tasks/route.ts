@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { appendTask, readTasks, readWorkerStatus } from "@/lib/agents";
+import { taskCore } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     // дедуп: такая же незакрытая задача уже в очереди → не плодим
-    const norm = (x: string) => x.replace(/\s+/g, " ").trim().toLowerCase();
-    const existing = readTasks().tasks.find((q) => q.status === "queued" && norm(q.text) === norm(text));
+    const existing = readTasks().tasks.find((q) => q.status === "queued" && taskCore(q.text) === taskCore(text));
     if (existing) {
       return NextResponse.json({ ok: true, dedup: true, task: existing });
     }
