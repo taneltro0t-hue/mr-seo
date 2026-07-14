@@ -82,8 +82,10 @@ def watchman() -> list[str]:
     # 2. просроченные verify
     try:
         hyps = _load(ROOT / "carpathy" / "hypotheses.json")["hypotheses"]
+        # просрочка = только реально ВЫПОЛНЕННЫЕ гипотезы (есть коммит);
+        # proposed без коммита — это невзятые предложения, не тревога (фикс 15.07)
         overdue = [h["id"] for h in hyps
-                   if h.get("status") in ("pending", "proposed") and h.get("verify_due", "9999") < TODAY]
+                   if h.get("status") == "pending" and h.get("commit") and h.get("verify_due", "9999") < TODAY]
         if overdue:
             alerts.append(f"просрочен verify: {', '.join(overdue[:5])}")
     except Exception as e:

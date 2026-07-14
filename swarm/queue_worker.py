@@ -72,6 +72,21 @@ def process() -> list[str]:
             except Exception as e:
                 out_lines.append(ln + f"  → ✗ fix-разбор упал: {str(e)[:60]}")
             continue
+        # [фокус]-задачи: рекомендации мозга → план моста (раньше висели вечно)
+        fk = re.match(r"^- \[(?P<ts>[^\]✓]+)\] \[фокус (?P<site>\w+)\] (?P<text>.+)$", ln.strip())
+        if fk and "✓" not in ln:
+            try:
+                r = subprocess.run([PY, str(ROOT / "swarm" / "bridge.py"), fk.group("site"),
+                                    f"Рекомендация фокуса недели: {fk.group('text')[:200]}. Дай конкретный план правок (файлы, что менять)."],
+                                   capture_output=True, text=True, timeout=700, cwd=str(ROOT))
+                mm = re.search(r"отчёт: (\S+)", r.stdout)
+                stamp = datetime.now().strftime("%m-%d %H:%M")
+                note = f"план моста ✓ ({Path(mm.group(1)).name})" if mm else "план моста ✗"
+                out_lines.append(ln + f"  → ✓ {stamp}: {note}")
+                done_reports.append(f"[фокус {fk.group('site')}] {fk.group('text')[:50]}: {note}")
+            except Exception as e:
+                out_lines.append(ln + f"  → ✗ {str(e)[:60]}")
+            continue
         m = TASK_RE.match(ln.strip())
         if not m or "✓" in ln:
             out_lines.append(ln)
