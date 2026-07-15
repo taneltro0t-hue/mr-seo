@@ -26,7 +26,9 @@ sys.path.insert(0, str(ROOT))
 INBOX = ROOT / "swarm" / "tasks" / "inbox.md"
 PY = str(ROOT / "venv" / "bin" / "python")
 
-TASK_RE = re.compile(r"^- \[(?P<ts>[^\]✓]+)\] \[quick-win (?P<site>\w+)\] (?P<text>.+)$")
+# универсально: [любой-тег site] — quick-win/decay/cannibal/chat/фокус и будущие
+TASK_RE = re.compile(r"^- \[(?P<ts>[^\]✓]+)\] \[(?P<tag>[\w-]+|фокус) (?P<site>\w+)\] (?P<text>.+)$")
+MAX_PER_RUN = 6  # не переполняем 2ч-цикл: хвост доберёт следующий прогон
 URL_RE = re.compile(r"страница (\S+)")
 QUERY_RE = re.compile(r"[Дд]ожать запрос [«\"]([^»\"]+)[»\"]")
 
@@ -56,6 +58,7 @@ def process() -> list[str]:
     lines = INBOX.read_text(encoding="utf-8").splitlines()
     done_reports = []
     out_lines = []
+    handled = 0
     for ln in lines:
         # [fix]-задачи: мозг разбирается и пишет решение в swarm/runs/fix-*.md
         fx = re.match(r"^- \[(?P<ts>[^\]✓]+)\] \[fix\] (?P<text>.+)$", ln.strip())
@@ -72,25 +75,11 @@ def process() -> list[str]:
             except Exception as e:
                 out_lines.append(ln + f"  → ✗ fix-разбор упал: {str(e)[:60]}")
             continue
-        # [фокус]-задачи: рекомендации мозга → план моста (раньше висели вечно)
-        fk = re.match(r"^- \[(?P<ts>[^\]✓]+)\] \[фокус (?P<site>\w+)\] (?P<text>.+)$", ln.strip())
-        if fk and "✓" not in ln:
-            try:
-                r = subprocess.run([PY, str(ROOT / "swarm" / "bridge.py"), fk.group("site"),
-                                    f"Рекомендация фокуса недели: {fk.group('text')[:200]}. Дай конкретный план правок (файлы, что менять)."],
-                                   capture_output=True, text=True, timeout=700, cwd=str(ROOT))
-                mm = re.search(r"отчёт: (\S+)", r.stdout)
-                stamp = datetime.now().strftime("%m-%d %H:%M")
-                note = f"план моста ✓ ({Path(mm.group(1)).name})" if mm else "план моста ✗"
-                out_lines.append(ln + f"  → ✓ {stamp}: {note}")
-                done_reports.append(f"[фокус {fk.group('site')}] {fk.group('text')[:50]}: {note}")
-            except Exception as e:
-                out_lines.append(ln + f"  → ✗ {str(e)[:60]}")
-            continue
         m = TASK_RE.match(ln.strip())
-        if not m or "✓" in ln:
+        if not m or "✓" in ln or handled >= MAX_PER_RUN:
             out_lines.append(ln)
             continue
+        handled += 1
         site, text = m.group("site"), m.group("text")
         _status("running", text)
         um, qm = URL_RE.search(text), QUERY_RE.search(text)
@@ -126,7 +115,27 @@ def process() -> list[str]:
     return done_reports
 
 
+def _alive(pid: int) -> bool:
+    try:
+        import os
+        os.kill(pid, 0)
+        return True
+    except Exception:
+        return False
+
+
 if __name__ == "__main__":
+    import os, json as _j
+    LOCK = ROOT / "swarm" / "tasks" / "worker.pid"
+    if LOCK.exists():
+        try:
+            old = int(LOCK.read_text().strip())
+            if _alive(old):
+                print(f"воркер уже работает (pid {old}) — выходим")
+                sys.exit(0)
+        except Exception:
+            pass
+    LOCK.write_text(str(os.getpid()), encoding="utf-8")
     # авто-гипотезы на свежие merge правок моста (замыкание петли)
     try:
         from swarm.merge_watch import scan as _merge_scan
@@ -134,7 +143,11 @@ if __name__ == "__main__":
             print(f"[merge_watch] авто-гипотеза: {_m}")
     except Exception as _e:
         print(f"[merge_watch] {str(_e)[:80]}")
-    reports = process()
+    try:
+        reports = process()
+    finally:
+        _status("idle")            # статус не врёт даже при падении
+        LOCK.unlink(missing_ok=True)
     if reports:
         try:
             from telegram_notifier import send_long_message
